@@ -14,6 +14,7 @@ import Trash from "./pages/Trash";
 import Users from "./pages/Users";
 import Dashboard from "./pages/dashboard";
 import { setOpenSidebar } from "./redux/slices/authSlice";
+import Register from "./pages/Register";
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
@@ -37,7 +38,7 @@ function Layout() {
       </div>
     </div>
   ) : (
-    <Navigate to='/log-in' state={{ from: location }} replace />
+    <Navigate to='/' replace />
   );
 }
 
@@ -96,20 +97,23 @@ function App() {
   return (
     <main className='w-full min-h-screen bg-[#f3f4f6] '>
       <Routes>
-        <Route element={<Layout />}>
-          <Route index path='/' element={<Navigate to='/dashboard' />} />
-          <Route path='/dashboard' element={<Dashboard />} />
-          <Route path='/tasks' element={<Tasks />} />
-          <Route path='/completed/:status' element={<Tasks />} />
-          <Route path='/in-progress/:status' element={<Tasks />} />
-          <Route path='/todo/:status' element={<Tasks />} />
-          <Route path='/team' element={<Users />} />
-          <Route path='/trashed' element={<Trash />} />
-          <Route path='/task/:id' element={<TaskDetails />} />
-        </Route>
+  {/* Public Routes */}
+  <Route path='/' element={<Login />} />
+  <Route path='/register' element={<Register />} />
 
-        <Route path='/log-in' element={<Login />} />
-      </Routes>
+  {/* Protected Routes wrapped with Layout */}
+  <Route element={<Layout />}>
+    <Route path='/dashboard' element={<Dashboard />} />
+    <Route path='/tasks' element={<Tasks />} />
+    <Route path='/completed/:status' element={<Tasks />} />
+    <Route path='/in-progress/:status' element={<Tasks />} />
+    <Route path='/todo/:status' element={<Tasks />} />
+    <Route path='/team' element={<Users />} />
+    <Route path='/trashed' element={<Trash />} />
+    <Route path='/task/:id' element={<TaskDetails />} />
+  </Route>
+</Routes>
+
 
       <Toaster richColors />
     </main>

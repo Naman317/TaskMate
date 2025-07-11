@@ -1,23 +1,27 @@
 import Notice from "../models/notification.js";
 import Task from "../models/task.js";
 import User from "../models/user.js";
-
 export const createTask = async (req, res) => {
   try {
     const { userId } = req.user;
+    const { title, team, stage, date, priority } = req.body;
 
-    const { title, team, stage, date, priority, assets } = req.body;
+    if (!title || !date) {
+      return res.status(400).json({
+        status: false,
+        message: "Title and Date are required.",
+      });
+    }
+
+    const normalizedStage = stage?.toLowerCase() || "todo";
+    const normalizedPriority = priority?.toLowerCase() || "normal";
 
     let text = "New task has been assigned to you";
     if (team?.length > 1) {
-      text = text + ` and ${team?.length - 1} others.`;
+      text += ` and ${team.length - 1} others.`;
     }
 
-    text =
-      text +
-      ` The task priority is set a ${priority} priority, so check and act accordingly. The task date is ${new Date(
-        date
-      ).toDateString()}. Thank you!!!`;
+    text += ` The task priority is set at ${normalizedPriority.toUpperCase()} priority. The task date is ${new Date(date).toDateString()}.`;
 
     const activity = {
       type: "assigned",
@@ -28,10 +32,9 @@ export const createTask = async (req, res) => {
     const task = await Task.create({
       title,
       team,
-      stage: stage.toLowerCase(),
+      stage: normalizedStage,
       date,
-      priority: priority.toLowerCase(),
-      assets,
+      priority: normalizedPriority,
       activities: activity,
     });
 
@@ -41,15 +44,12 @@ export const createTask = async (req, res) => {
       task: task._id,
     });
 
-    res
-      .status(200)
-      .json({ status: true, task, message: "Task created successfully." });
+    res.status(200).json({ status: true, task, message: "Task created successfully." });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    res.status(400).json({ status: false, message: error.message });
   }
 };
-
 export const duplicateTask = async (req, res) => {
   try {
     const { id } = req.params;
