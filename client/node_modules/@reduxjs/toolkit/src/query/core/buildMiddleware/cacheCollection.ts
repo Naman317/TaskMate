@@ -1,13 +1,12 @@
-import type { BaseQueryFn } from '../../baseQueryTypes'
 import type { QueryDefinition } from '../../endpointDefinitions'
 import type { ConfigState, QueryCacheKey } from '../apiState'
+import { isAnyOf } from '../rtkImports'
 import type {
+  ApiMiddlewareInternalHandler,
+  InternalHandlerBuilder,
   QueryStateMeta,
   SubMiddlewareApi,
   TimeoutId,
-  InternalHandlerBuilder,
-  ApiMiddlewareInternalHandler,
-  InternalMiddlewareState,
 } from './types'
 
 export type ReferenceCacheCollection = never
@@ -15,28 +14,20 @@ export type ReferenceCacheCollection = never
 function isObjectEmpty(obj: Record<any, any>) {
   // Apparently a for..in loop is faster than `Object.keys()` here:
   // https://stackoverflow.com/a/59787784/62937
-  for (let k in obj) {
+  for (const k in obj) {
     // If there is at least one key, it's not empty
     return false
   }
   return true
 }
 
-declare module '../../endpointDefinitions' {
-  interface QueryExtraOptions<
-    TagTypes extends string,
-    ResultType,
-    QueryArg,
-    BaseQuery extends BaseQueryFn,
-    ReducerPath extends string = string
-  > {
-    /**
-     * Overrides the api-wide definition of `keepUnusedDataFor` for this endpoint only. _(This value is in seconds.)_
-     *
-     * This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
-     */
-    keepUnusedDataFor?: number
-  }
+export type CacheCollectionQueryExtraOptions = {
+  /**
+   * Overrides the api-wide definition of `keepUnusedDataFor` for this endpoint only. _(This value is in seconds.)_
+   *
+   * This is how long RTK Query will keep your data cached for **after** the last component unsubscribes. For example, if you query an endpoint, then unmount the component, then mount another component that makes the same request within the given time frame, the most recent value will be served from the cache.
+   */
+  keepUnusedDataFor?: number
 }
 
 // Per https://developer.mozilla.org/en-US/docs/Web/API/setTimeout#maximum_delay_value , browsers store
@@ -49,10 +40,20 @@ export const THIRTY_TWO_BIT_MAX_TIMER_SECONDS = 2_147_483_647 / 1_000 - 1
 export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
   reducerPath,
   api,
+  queryThunk,
   context,
   internalState,
+  selectors: { selectQueryEntry, selectConfig },
 }) => {
-  const { removeQueryResult, unsubscribeQueryResult } = api.internalActions
+  const { removeQueryResult, unsubscribeQueryResult, cacheEntriesUpserted } =
+    api.internalActions
+
+  const canTriggerUnsubscribe = isAnyOf(
+    unsubscribeQueryResult.match,
+    queryThunk.fulfilled,
+    queryThunk.rejected,
+    cacheEntriesUpserted.match,
+  )
 
   function anySubscriptionsRemainingForKey(queryCacheKey: string) {
     const subscriptions = internalState.currentSubscriptions[queryCacheKey]
@@ -64,18 +65,25 @@ export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
   const handler: ApiMiddlewareInternalHandler = (
     action,
     mwApi,
-    internalState
+    internalState,
   ) => {
-    if (unsubscribeQueryResult.match(action)) {
-      const state = mwApi.getState()[reducerPath]
-      const { queryCacheKey } = action.payload
+    const state = mwApi.getState()
+    const config = selectConfig(state)
+    if (canTriggerUnsubscribe(action)) {
+      let queryCacheKeys: QueryCacheKey[]
 
-      handleUnsubscribe(
-        queryCacheKey,
-        state.queries[queryCacheKey]?.endpointName,
-        mwApi,
-        state.config
-      )
+      if (cacheEntriesUpserted.match(action)) {
+        queryCacheKeys = action.payload.map(
+          (entry) => entry.queryDescription.queryCacheKey,
+        )
+      } else {
+        const { queryCacheKey } = unsubscribeQueryResult.match(action)
+          ? action.payload
+          : action.meta.arg
+        queryCacheKeys = [queryCacheKey]
+      }
+
+      handleUnsubscribeMany(queryCacheKeys, mwApi, config)
     }
 
     if (api.util.resetApiState.match(action)) {
@@ -86,19 +94,27 @@ export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
     }
 
     if (context.hasRehydrationInfo(action)) {
-      const state = mwApi.getState()[reducerPath]
       const { queries } = context.extractRehydrationInfo(action)!
-      for (const [queryCacheKey, queryState] of Object.entries(queries)) {
-        // Gotcha:
-        // If rehydrating before the endpoint has been injected,the global `keepUnusedDataFor`
-        // will be used instead of the endpoint-specific one.
-        handleUnsubscribe(
-          queryCacheKey as QueryCacheKey,
-          queryState?.endpointName,
-          mwApi,
-          state.config
-        )
-      }
+      // Gotcha:
+      // If rehydrating before the endpoint has been injected,the global `keepUnusedDataFor`
+      // will be used instead of the endpoint-specific one.
+      handleUnsubscribeMany(
+        Object.keys(queries) as QueryCacheKey[],
+        mwApi,
+        config,
+      )
+    }
+  }
+
+  function handleUnsubscribeMany(
+    cacheKeys: QueryCacheKey[],
+    api: SubMiddlewareApi,
+    config: ConfigState<string>,
+  ) {
+    const state = api.getState()
+    for (const queryCacheKey of cacheKeys) {
+      const entry = selectQueryEntry(state, queryCacheKey)
+      handleUnsubscribe(queryCacheKey, entry?.endpointName, api, config)
     }
   }
 
@@ -106,7 +122,7 @@ export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
     queryCacheKey: QueryCacheKey,
     endpointName: string | undefined,
     api: SubMiddlewareApi,
-    config: ConfigState<string>
+    config: ConfigState<string>,
   ) {
     const endpointDefinition = context.endpointDefinitions[
       endpointName!
@@ -124,7 +140,7 @@ export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
     // Also avoid negative values too.
     const finalKeepUnusedDataFor = Math.max(
       0,
-      Math.min(keepUnusedDataFor, THIRTY_TWO_BIT_MAX_TIMER_SECONDS)
+      Math.min(keepUnusedDataFor, THIRTY_TWO_BIT_MAX_TIMER_SECONDS),
     )
 
     if (!anySubscriptionsRemainingForKey(queryCacheKey)) {
@@ -132,6 +148,7 @@ export const buildCacheCollectionHandler: InternalHandlerBuilder = ({
       if (currentTimeout) {
         clearTimeout(currentTimeout)
       }
+
       currentRemovalTimeouts[queryCacheKey] = setTimeout(() => {
         if (!anySubscriptionsRemainingForKey(queryCacheKey)) {
           api.dispatch(removeQueryResult({ queryCacheKey }))

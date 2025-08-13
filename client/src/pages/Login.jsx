@@ -27,10 +27,8 @@ const Login = () => {
 });
       const userData = res.data;
 console.log(userData);
-      // Save to Redux
       dispatch(setUser(userData));
 
-      // Save to localStorage
       localStorage.setItem("user", JSON.stringify(userData));
 
       navigate("/dashboard");
@@ -48,19 +46,15 @@ console.log(err);
   return (
     <div className='w-full min-h-screen flex items-center justify-center flex-col lg:flex-row bg-[#f3f4f6]'>
       <div className='w-full md:w-auto flex gap-0 md:gap-40 flex-col md:flex-row items-center justify-center'>
-        {/* Left Side */}
+
         <div className='h-full w-full lg:w-2/3 flex flex-col items-center justify-center'>
           <div className='w-full md:max-w-lg flex flex-col items-center justify-center gap-5'>
-            <span className='border rounded-full text-sm px-3 py-1 text-gray-600'>
-              Manage all your tasks in one place!
-            </span>
-            <p className='text-4xl font-black text-center text-blue-700'>
-              Cloud-Based Task Manager
-            </p>
+            <span className='border rounded-full text-lg px-3 py-1 text-gray-600'>Your Smart Task Hub </span>
+            <p className='text-3xl font-black text-center text-blue-700'>Plan, track, and deliver</p>
+            <p className='text-3xl font-black text-center text-blue-700'>all in one place.</p>
           </div>
         </div>
 
-        {/* Right Side */}
         <div className='w-full md:w-1/3 p-4 flex flex-col justify-center items-center'>
           <form
             onSubmit={handleSubmit(submitHandler)}

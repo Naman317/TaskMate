@@ -4,11 +4,20 @@ import { FaUser, FaUserLock } from "react-icons/fa";
 import { IoLogOutOutline } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getInitials } from "../utils";
 import { logoutUser } from "../redux/slices/authSlice";
 
 import ProfileModal from "./ProfileModal";
 import ChangePasswordModal from "./ChangePasswordModal";
+
+const getInitials = (name) => {
+  if (!name || typeof name !== "string") return "";
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((n) => n[0]?.toUpperCase() || "")
+    .join("")
+    .slice(0, 2);
+};
 
 const UserAvatar = () => {
   const [openProfile, setOpenProfile] = useState(false);
@@ -20,17 +29,18 @@ const UserAvatar = () => {
 
   const logoutHandler = () => {
     dispatch(logoutUser());
-    localStorage.removeItem("user");
     navigate("/", { replace: true });
   };
+
+  const initials = getInitials(user?.name);
 
   return (
     <>
       {/* Avatar and Dropdown */}
       <Menu as='div' className='relative inline-block text-left'>
-        <Menu.Button className='w-10 h-10 2xl:w-12 2xl:h-12 items-center justify-center rounded-full bg-blue-600'>
+        <Menu.Button className='w-10 h-10 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full bg-blue-600'>
           <span className='text-white font-semibold'>
-            {getInitials(user?.name)}
+            {initials || "?"}
           </span>
         </Menu.Button>
 

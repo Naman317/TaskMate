@@ -36,8 +36,7 @@ const Table = ({ tasks }) => {
       <tr className='w-full text-black  text-left'>
         <th className='py-2'>Task Title</th>
         <th className='py-2'>Priority</th>
-        <th className='py-2 line-clamp-1'>Created At</th>
-        <th className='py-2'>Assets</th>
+        <th className='py-2 line-clamp-1'>Task Date</th>
         <th className='py-2'>Team</th>
       </tr>
     </thead>
@@ -79,10 +78,7 @@ const Table = ({ tasks }) => {
             <BiMessageAltDetail />
             <span>{task?.activities?.length}</span>
           </div>
-          <div className='flex gap-1 items-center text-sm text-gray-600 dark:text-gray-400'>
-            <MdAttachFile />
-            <span>{task?.assets?.length}</span>
-          </div>
+          
           <div className='flex gap-1 items-center text-sm text-gray-600 dark:text-gray-400'>
             <FaList />
             <span>0/{task?.subTasks?.length}</span>

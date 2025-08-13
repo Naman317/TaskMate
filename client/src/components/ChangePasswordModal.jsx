@@ -1,14 +1,30 @@
 import { useState } from "react";
-
+import API from "../assets/axios";
+import { toast } from "react-toastify";
 const ChangePasswordModal = ({ open, setOpen }) => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+const handleChangePassword = async () => {
+  try {
+    const res = await API.put("/user/change-password", {
+      oldPassword,
+      password: newPassword, // backend expects 'password'
+    });
 
-  const handleChangePassword = () => {
-    console.log("Old:", oldPassword, "New:", newPassword);
-    // send request to API here
-    setOpen(false);
-  };
+    if (res.data.status) {
+      toast.success("Password changed successfully!");
+      setOldPassword("");
+      setNewPassword("");
+      setOpen(false);
+    } else {
+      toast.error(res.data.message || "Failed to change password.");
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Something went wrong.");
+    console.log("Password change error:", error);
+  }
+};
+
 
   if (!open) return null;
 
