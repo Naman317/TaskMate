@@ -32,7 +32,8 @@ const Login = () => {
     toast.promise(loginPromise, {
       loading: "Signing you in...",
       success: (res) => {
-        const userData = res.data;
+        const userData = res?.data;
+        if (!userData) throw new Error("Invalid response from server");
         dispatch(setUser(userData));
         localStorage.setItem("user", JSON.stringify(userData));
         navigate("/dashboard");

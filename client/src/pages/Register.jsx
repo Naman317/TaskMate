@@ -31,7 +31,8 @@ const Register = () => {
     toast.promise(registerPromise, {
       loading: "Creating your account...",
       success: (res) => {
-        const userData = res.data;
+        const userData = res?.data;
+        if (!userData) throw new Error("Could not retrieve user data");
         dispatch(setUser(userData));
         localStorage.setItem("user", JSON.stringify(userData));
         navigate("/dashboard");
