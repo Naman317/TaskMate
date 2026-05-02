@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
-import API from "../assets/axios";
 import Loading from "../components/Loader";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -13,6 +12,7 @@ import BoardView from "../components/BoardView";
 import Table from "../components/task/Table";
 import AddTask from "../components/task/AddTask";
 import useToast from "../hooks/useToast";
+import { useGetTasksQuery, useDeleteRestoreTaskMutation } from "../redux/api/taskApiSlice";
 
 const Tasks = () => {
   const params = useParams();
@@ -20,118 +20,52 @@ const Tasks = () => {
   const [listening, setListening] = useState(false);
   const [view, setView] = useState("board"); // "board" or "list"
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState([]);
-  const [error, setError] = useState("");
-  const [newTaskData, setNewTaskData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const status = params?.status || "";
+  const isTrashed = status === "trashed";
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  // SDE 2 move: Using RTK Query for data fetching
+  const { data, isLoading, error, refetch } = useGetTasksQuery({
+    stage: status !== "trashed" ? status : "",
+    isTrashed,
+  });
 
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get("/task");
-      setTasks(res.data.tasks);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load tasks");
-      toast.error("Failed to load tasks", "Check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [deleteRestoreTask] = useDeleteRestoreTaskMutation();
 
-
-  const Todaydate = () => {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${year}-${month}-${day}`;
-  };
-
-  const parseVoiceCommand = (command) => {
+  const handleVoiceCommand = (command) => {
     const lowerCommand = command.toLowerCase();
-    toast.info(`Voice command: "${command}"`);
-
-    if (lowerCommand.startsWith('create task') || lowerCommand.startsWith('add task')) {
-      const content = lowerCommand.replace(/create task|add task/, '').trim();
-      if (content) {
-        setNewTaskData({
-          title: content.charAt(0).toUpperCase() + content.slice(1),
-          description: '',
-          priority: 'medium',
-          date: Todaydate(),
-        });
-        setOpen(true);
-      }
-    } else if (lowerCommand.startsWith('delete task')) {
-      const title = lowerCommand.replace('delete task', '').trim();
-      const taskToDelete = tasks.find(t => t.title.toLowerCase().includes(title));
-      if (taskToDelete) {
-        handleDelete(taskToDelete._id);
-      } else {
-        toast.error(`Task "${title}" not found.`);
-      }
-    } else {
-      toast.error('Command not recognized. Try "Create task [name]"');
+    if (lowerCommand.includes("create task") || lowerCommand.includes("add task")) {
+      setOpen(true);
     }
   };
 
   const startVoiceRecognition = () => {
     if (!("webkitSpeechRecognition" in window)) {
-      toast.error("Speech recognition not supported in this browser.");
+      toast.error("Voice recognition not supported");
       return;
     }
-
     const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
     recognition.onstart = () => setListening(true);
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      parseVoiceCommand(transcript);
-    };
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      setListening(false);
-    };
+    recognition.onresult = (e) => handleVoiceCommand(e.results[0][0].transcript);
     recognition.onend = () => setListening(false);
     recognition.start();
   };
 
   const handleDelete = async (taskId) => {
     try {
-      await API.put(`task/${taskId}`); // Soft delete
-      toast.success("Task deleted successfully");
-      fetchTasks();
+      await deleteRestoreTask({ id: taskId, actionType: "delete" }).unwrap();
+      toast.success("Task deleted");
     } catch (err) {
-      console.error("Delete error:", err);
       toast.error("Failed to delete task");
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    let matchesStatus = true;
-    if (status === "overdue") {
-      matchesStatus = new Date(task.date) < new Date() && task.stage !== "completed";
-    } else if (status) {
-      matchesStatus = task.stage.toLowerCase() === status.toLowerCase();
-    }
-    
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const filteredTasks = data?.tasks?.filter((task) => 
+    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6 animate-in">
         <div className="flex justify-between items-center">
@@ -155,87 +89,91 @@ const Tasks = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight capitalize">
-            {status ? `${status} Tasks` : "All Tasks"}
+            {status || "All"} Tasks
           </h1>
-          <p className="text-muted-foreground">Manage and track your team's progress.</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant={listening ? "danger" : "secondary"}
-            onClick={startVoiceRecognition}
-            icon={listening ? <MicOff size={18} /> : <Mic size={18} />}
-            label={listening ? "Listening..." : "Voice"}
-          />
-          <Button
-            onClick={() => setOpen(true)}
-            label="Create Task"
-            icon={<Plus size={18} />}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card p-4 rounded-xl border shadow-sm">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <p className="text-muted-foreground">Manage and track your project tasks.</p>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="flex bg-muted p-1 rounded-lg">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            />
+          </div>
+
+          <div className="flex items-center bg-muted p-1 rounded-lg">
             <button
               onClick={() => setView("board")}
               className={clsx(
-                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                view === "board" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                "p-2 rounded-md transition-all",
+                view === "board" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <LayoutGrid size={16} /> Board
+              <LayoutGrid size={18} />
             </button>
             <button
               onClick={() => setView("list")}
               className={clsx(
-                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                "p-2 rounded-md transition-all",
+                view === "list" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <List size={16} /> List
+              <List size={18} />
             </button>
           </div>
-          <Button variant="outline" size="sm" icon={<Filter size={16} />} label="Filter" />
+
+          <Button
+            variant={listening ? "secondary" : "outline"}
+            icon={listening ? <Mic className="animate-pulse text-red-500" size={18} /> : <Mic size={18} />}
+            onClick={startVoiceRecognition}
+            className="hidden md:flex"
+          />
+
+          <Button
+            label="Create Task"
+            icon={<Plus size={18} />}
+            onClick={() => setOpen(true)}
+          />
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={view}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {view === "board" ? (
-            <BoardView tasks={filteredTasks} />
-          ) : (
-            <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-              <Table tasks={filteredTasks} />
-            </div>
+      {filteredTasks.length > 0 ? (
+        view === "board" ? (
+          <BoardView tasks={filteredTasks} />
+        ) : (
+          <div className="bg-card border rounded-xl overflow-hidden shadow-premium">
+            <Table tasks={filteredTasks} />
+          </div>
+        )
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/30 rounded-3xl border-2 border-dashed border-border/50">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+            <Search size={32} className="text-muted-foreground/50" />
+          </div>
+          <h3 className="text-xl font-bold">No tasks found</h3>
+          <p className="text-muted-foreground mt-2 max-w-sm">
+            {searchQuery ? `We couldn't find any tasks matching "${searchQuery}"` : "You haven't created any tasks yet."}
+          </p>
+          {!searchQuery && (
+            <Button
+              label="Create your first task"
+              variant="outline"
+              className="mt-6"
+              onClick={() => setOpen(true)}
+            />
           )}
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      )}
 
-      <AddTask 
-        open={open} 
-        setOpen={setOpen} 
-        prefillData={newTaskData} 
-        clearPrefill={() => setNewTaskData(null)} 
-        refresh={fetchTasks}
+      <AddTask
+        open={open}
+        setOpen={setOpen}
+        refresh={refetch}
       />
     </div>
   );
