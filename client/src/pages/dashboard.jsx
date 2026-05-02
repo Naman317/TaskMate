@@ -244,7 +244,11 @@ const Dashboard = () => {
                           task.stage === "in progress" ? "bg-amber-500" : "bg-emerald-500"
                         )} />
                         <span className="font-medium text-sm line-clamp-1">{task.title}</span>
+                        {new Date(task.date) < new Date() && task.stage !== "completed" && (
+                          <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1 py-0.5 rounded uppercase">Overdue</span>
+                        )}
                       </div>
+
                     </td>
                     <td className="py-4 px-2">
                       <span className={clsx(

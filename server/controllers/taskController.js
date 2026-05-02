@@ -309,6 +309,40 @@ export const createSubTask = async (req, res) => {
   }
 };
 
+export const updateSubTaskStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subTaskId, isCompleted } = req.body;
+
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
+
+    const subTask = task.subTasks.id(subTaskId);
+    if (!subTask) {
+      return res.status(404).json({ status: false, message: "Subtask not found." });
+    }
+
+    subTask.isCompleted = isCompleted;
+    
+    task.activities.push({
+      type: "subtask",
+      activity: `${isCompleted ? "Completed" : "Uncompleted"} subtask "${subTask.title}"`,
+      by: req.user.userId,
+    });
+
+    await task.save();
+
+    res.status(200).json({ status: true, message: "Subtask status updated." });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+
 
 export const updateTask = async (req, res) => {
   try {

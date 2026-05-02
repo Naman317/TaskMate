@@ -12,7 +12,8 @@ import {
   History,
   Subtitles,
   MoreVertical,
-  ChevronLeft
+  ChevronLeft,
+  Plus
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,6 +25,8 @@ import Loading from "../components/Loader";
 import Button from "../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import Skeleton from "../components/ui/Skeleton";
+import AddSubTask from "../components/task/AddSubTask";
+
 
 const TASKTYPEICON = {
   commented: <MessageSquare size={16} className="text-blue-500" />,
@@ -49,6 +52,8 @@ const TaskDetails = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [openSubTask, setOpenSubTask] = useState(false);
+
 
   useEffect(() => {
     fetchTask();
@@ -81,8 +86,23 @@ const TaskDetails = () => {
 
   if (!task) return <div className="text-center py-20 text-muted-foreground">Task not found</div>;
 
+  const toggleSubTask = async (subTaskId, currentStatus) => {
+    try {
+      await API.put(`/task/update-subtask-status/${id}`, {
+        subTaskId,
+        isCompleted: !currentStatus,
+      });
+      fetchTask();
+      toast.success("Subtask status updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update subtask status");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in">
+
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" icon={<ChevronLeft size={20} />} onClick={() => navigate(-1)} />
         <h1 className="text-3xl font-bold tracking-tight">{task?.title}</h1>
@@ -139,8 +159,14 @@ const TaskDetails = () => {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Due Date</p>
-                      <p className="text-sm font-medium">{moment(task.date).format("MMM D, YYYY")}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{moment(task.date).format("MMM D, YYYY")}</p>
+                        {new Date(task.date) < new Date() && task.stage !== "completed" && (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded uppercase">Overdue</span>
+                        )}
+                      </div>
                     </div>
+
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Created</p>
                       <p className="text-sm font-medium">{moment(task.createdAt).format("MMM D, YYYY")}</p>
@@ -152,29 +178,47 @@ const TaskDetails = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">Sub-Tasks</CardTitle>
-                  <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    {task?.subTasks?.length || 0} Total
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {task?.subTasks?.length || 0} Total
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      icon={<Plus size={16} />} 
+                      className="text-primary"
+                      onClick={() => setOpenSubTask(true)}
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {task?.subTasks?.length > 0 ? task.subTasks.map((sub, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 rounded-lg border bg-accent/30 hover:bg-accent/50 transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <CheckCircle2 size={16} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold">{sub.title}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-muted-foreground">{moment(sub.date).fromNow()}</span>
-                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold uppercase">{sub.tag}</span>
+                    <div className="space-y-4">
+                      {task?.subTasks?.length > 0 ? task.subTasks.map((sub, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-3 rounded-lg border bg-accent/30 hover:bg-accent/50 transition-colors">
+                          <button 
+                            onClick={() => toggleSubTask(sub._id, sub.isCompleted)}
+                            className={clsx(
+                              "w-8 h-8 rounded-full flex items-center justify-center transition-all",
+                              sub.isCompleted ? "bg-emerald-100 text-emerald-600" : "bg-primary/10 text-primary"
+                            )}
+                          >
+                            <CheckCircle2 size={16} />
+                          </button>
+                          <div className="flex-1">
+                            <p className={clsx("text-sm font-semibold", sub.isCompleted && "line-through text-muted-foreground")}>
+                              {sub.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] text-muted-foreground">{moment(sub.date).fromNow()}</span>
+                              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold uppercase">{sub.tag}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No sub-tasks yet.</p>
-                    )}
-                  </div>
+                      )) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No sub-tasks yet.</p>
+                      )}
+                    </div>
+
                 </CardContent>
               </Card>
             </div>
@@ -223,9 +267,17 @@ const TaskDetails = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      <AddSubTask 
+        open={openSubTask} 
+        setOpen={setOpenSubTask} 
+        id={id} 
+        refresh={fetchTask} 
+      />
     </div>
   );
 };
+
 
 const Activities = ({ activity, id, refresh }) => {
   const [selectedType, setSelectedType] = useState(act_types[0]);

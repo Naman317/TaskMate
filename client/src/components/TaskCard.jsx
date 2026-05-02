@@ -34,6 +34,9 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const navigate = useNavigate();
 
+  const isOverdue = new Date(task?.date) < new Date() && task?.stage !== "completed";
+
+
   const handleView = () => navigate(`/task/${task._id}`);
   const handleEdit = () => setOpenEdit(true);
   const handleDeleteClick = () => setOpenDialog(true);
@@ -62,7 +65,10 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
       transition={{ duration: 0.2 }}
       className="w-full"
     >
-      <Card className="group border-border/50 hover:border-primary/30 hover:shadow-premium transition-all overflow-visible">
+      <Card className={clsx(
+        "group border-border/50 hover:border-primary/30 hover:shadow-premium transition-all overflow-visible",
+        isOverdue && "border-red-200 bg-red-50/30"
+      )}>
         <CardContent className="p-5">
           <div className="flex justify-between items-start mb-4">
             <span className={clsx(
@@ -139,6 +145,11 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
               <h4 className="font-bold text-foreground leading-tight group-hover:text-primary transition-colors cursor-pointer" onClick={handleView}>
                 {task?.title}
               </h4>
+              {isOverdue && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse">
+                  <AlertCircle size={10} /> Overdue
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
@@ -166,7 +177,9 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
               </div>
               <div className="flex gap-1 items-center hover:text-foreground transition-colors cursor-help" title="Subtasks">
                 <ListChecks size={14} />
-                <span className="text-xs font-medium">0/{task?.subTasks?.length}</span>
+                <span className="text-xs font-medium">
+                  {task?.subTasks?.filter(s => s.isCompleted).length}/{task?.subTasks?.length}
+                </span>
               </div>
             </div>
 
