@@ -15,21 +15,13 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://tasky-one-iota.vercel.app",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: ["http://localhost:3000", "https://tasky-one-iota.vercel.app"],
     methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     credentials: true,
   })
 );
-
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
