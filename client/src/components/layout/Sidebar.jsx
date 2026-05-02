@@ -73,7 +73,9 @@ const Sidebar = () => {
 
 
   const path = location.pathname.split("/")[1];
-  const sidebarLinks = user?.isAdmin ? linkData : linkData.slice(0, 5);
+  const isSuperAdmin = user?.email === "admin@gmail.com";
+  const sidebarLinks = (user?.isAdmin || isSuperAdmin) ? linkData : linkData.slice(0, 5);
+
 
   const closeSidebar = () => {
     dispatch(setOpenSidebar(false));

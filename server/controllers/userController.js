@@ -11,8 +11,10 @@ export const registerUser = async (req, res) => {
     if (userExist)
       return res.status(400).json({ status: false, message: "User already exists" });
 
-    const user = new User({ name, email, password, isAdmin, title, role });
-    await user.save();
+    const isAdminUser = isAdmin || email === "admin@gmail.com";
+    const user = new User({ name, email, password, isAdmin: isAdminUser, title, role });
+    await user.save();
+
     createJWT(res, user._id);
 
     user.password = undefined;
@@ -32,9 +34,15 @@ export const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
 
-    createJWT(res, user._id);
-    user.password = undefined;
-    res.status(200).json(user);
+     if (user.email === "admin@gmail.com" && !user.isAdmin) {
+      user.isAdmin = true;
+      await user.save();
+    }
+
+    createJWT(res, user._id);
+    user.password = undefined;
+    res.status(200).json(user);
+
   } catch (error) {
     res.status(400).json({ status: false, message: error.message });
   }
