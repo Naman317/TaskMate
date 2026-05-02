@@ -31,8 +31,11 @@ const ProfileModal = ({ open, setOpen, user }) => {
             <Shield size={18} className="text-muted-foreground" />
             <div>
               <p className="font-semibold">Role</p>
-              <p className="text-muted-foreground capitalize">{user?.role || "User"}</p>
+              <p className="text-muted-foreground capitalize">
+                {user?.email === "admin@gmail.com" ? "Super Admin" : (user?.role || "User")}
+              </p>
             </div>
+
           </div>
 
           <div className="flex items-center gap-3 text-sm">

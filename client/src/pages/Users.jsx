@@ -144,27 +144,35 @@ const Users = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {isSuperAdmin ? (
                           <div className="relative inline-flex items-center gap-2">
-                            <Shield size={14} className="text-primary" />
+                            <Shield size={14} className="text-indigo-600" />
                             <select
-                              value={user.role}
+                              value={user.email === "admin@gmail.com" ? "superadmin" : user.role}
                               onChange={(e) => handleRoleChange(user._id, e.target.value)}
                               disabled={user.email === "admin@gmail.com"}
-                              className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none disabled:cursor-not-allowed disabled:hover:text-muted-foreground"
+                              className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none disabled:cursor-not-allowed disabled:text-indigo-600 uppercase"
                             >
-                              <option value="user">User</option>
-                              <option value="admin">Admin</option>
+                              {user.email === "admin@gmail.com" ? (
+                                <option value="superadmin">Super Admin</option>
+                              ) : (
+                                <>
+                                  <option value="user">User</option>
+                                  <option value="admin">Admin</option>
+                                </>
+                              )}
                             </select>
                           </div>
                         ) : (
                           <span className={clsx(
                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                            user.email === "admin@gmail.com" ? "bg-indigo-100 text-indigo-700 border-indigo-200" :
                             user.role === "admin" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200"
                           )}>
                             <Shield size={10} />
-                            {user.role}
+                            {user.email === "admin@gmail.com" ? "Super Admin" : user.role}
                           </span>
                         )}
                       </td>
+
 
                       {isSuperAdmin && (
                         <td className="px-6 py-4 whitespace-nowrap text-right">

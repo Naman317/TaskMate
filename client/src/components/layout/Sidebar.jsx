@@ -100,7 +100,11 @@ const Sidebar = () => {
         {!isCollapsed && (
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/10">
             <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Status</p>
-            <p className="text-xs font-semibold mb-3">{user?.isAdmin ? "Administrator" : "Team Member"}</p>
+            <p className="text-xs font-semibold mb-3">
+              {user?.email === "admin@gmail.com" ? "Super Admin" : 
+               user?.isAdmin ? "Administrator" : "Team Member"}
+            </p>
+
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                <div className="h-full bg-primary w-full opacity-60"></div>
             </div>
