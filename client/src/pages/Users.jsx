@@ -148,7 +148,8 @@ const Users = () => {
                             <select
                               value={user.role}
                               onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                              className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none"
+                              disabled={user.email === "admin@gmail.com"}
+                              className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none disabled:cursor-not-allowed disabled:hover:text-muted-foreground"
                             >
                               <option value="user">User</option>
                               <option value="admin">Admin</option>
@@ -178,10 +179,11 @@ const Users = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-30"
                               icon={<Trash2 size={16} />}
                               onClick={() => deleteClick(user._id)}
-                              title="Delete User"
+                              title={user.email === "admin@gmail.com" ? "Cannot delete Super Admin" : "Delete User"}
+                              disabled={user.email === "admin@gmail.com"}
                             />
                           </div>
                         </td>
@@ -192,7 +194,7 @@ const Users = () => {
                   <tr>
                     <td colSpan={isSuperAdmin ? 4 : 3} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <UsersIcon size={40} strokeWidth={1} />
+                        <Users size={40} strokeWidth={1} />
                         <p>No team members found.</p>
                       </div>
                     </td>

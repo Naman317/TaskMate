@@ -251,6 +251,11 @@ export const changeUserPassword = async (req, res) => {
 export const deleteUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    const user = await User.findById(id);
+    if (user?.email === "admin@gmail.com") {
+      return res.status(403).json({ status: false, message: "Cannot delete Super Admin" });
+    }
 
     await User.findByIdAndDelete(id);
 
@@ -262,3 +267,4 @@ export const deleteUserProfile = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
