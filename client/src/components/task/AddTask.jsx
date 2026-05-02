@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"];
 const PRIORITY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
 
-const AddTask = ({ open, setOpen, task,prefillData }) => {
+const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
   const isEditMode = !!task;
   const user = useSelector((state) => state.auth.user); // { _id, role }
 
@@ -33,40 +33,40 @@ const AddTask = ({ open, setOpen, task,prefillData }) => {
   const [uploading, setUploading] = useState(false);
 
   // For Edit Mode
-useEffect(() => {
-  if (isEditMode && task) {
-    reset({
-      title: task.title,
-      date: task.date?.slice(0, 10),
-    });
-    setTeam(task.team || []);
-    setStage(task.stage?.toUpperCase() || LISTS[0]);
-    setPriority(task.priority?.toUpperCase() || PRIORITY[2]);
-  } else if (!prefillData) {
-    // If not editing and no prefill, reset normally
-    reset();
-    if (!isAdmin) {
-      setTeam([user]);
-    } else {
-      setTeam([]);
+  useEffect(() => {
+    if (isEditMode && task) {
+      reset({
+        title: task.title,
+        date: task.date?.slice(0, 10),
+      });
+      setTeam(task.team || []);
+      setStage(task.stage?.toUpperCase() || LISTS[0]);
+      setPriority(task.priority?.toUpperCase() || PRIORITY[2]);
+    } else if (!prefillData) {
+      // If not editing and no prefill, reset normally
+      reset();
+      if (!isAdmin) {
+        setTeam([user]);
+      } else {
+        setTeam([]);
+      }
     }
-  }
-}, [isEditMode, task, reset, isAdmin, user, prefillData]);
+  }, [isEditMode, task, reset, isAdmin, user, prefillData]);
 
 
-useEffect(() => {
-  if (prefillData) {
-    reset({
-      title: prefillData.title || "",
-      date: prefillData.date || "", // Set prefilled date
-    });
+  useEffect(() => {
+    if (prefillData) {
+      reset({
+        title: prefillData.title || "",
+        date: prefillData.date || "", // Set prefilled date
+      });
 
-    setPriority(prefillData.priority?.toUpperCase() || "MEDIUM");
+      setPriority(prefillData.priority?.toUpperCase() || "MEDIUM");
 
-    // Assign to self for voice commands
-    setTeam([user]);
-  }
-}, [prefillData, isAdmin, user, reset]);
+      // Assign to self for voice commands
+      setTeam([user]);
+    }
+  }, [prefillData, isAdmin, user, reset]);
 
   const submitHandler = async (data) => {
     if (isUserNotAllowed) return alert("You can't edit an admin-created task");
@@ -94,7 +94,7 @@ useEffect(() => {
 
       setUploading(false);
       setOpen(false);
-      window.location.reload();
+      if (refresh) refresh();
     } catch (err) {
       console.error("Error submitting task:", err.response?.data || err.message);
       alert("Failed to submit task.");
