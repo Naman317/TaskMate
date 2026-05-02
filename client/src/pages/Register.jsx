@@ -3,163 +3,175 @@ import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../assets/axios";
-import { MdOutlineAddTask } from "react-icons/md";
-import { AiOutlineMail, AiOutlineLock, AiOutlineUser } from "react-icons/ai";
-import { FiArrowLeft } from "react-icons/fi";
+import { motion } from "framer-motion";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
+
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 import { setUser } from "../redux/slices/authSlice";
-import Textbox from "../components/Textbox";
-import Button from "../components/Button";
+import useToast from "../hooks/useToast";
 
 const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   const onSubmit = async (data) => {
-    try {
-      const res = await API.post("/user/register", {
-        ...data,
-        isAdmin: false,
-      });
+    const registerPromise = API.post("/user/register", {
+      ...data,
+      isAdmin: false,
+    });
 
-      const userData = res.data;
-      dispatch(setUser(userData));
-      localStorage.setItem("user", JSON.stringify(userData));
-      navigate("/dashboard");
-    } catch (error) {
-      alert(error.response?.data?.message || "Registration failed.");
-    }
+    toast.promise(registerPromise, {
+      loading: "Creating your account...",
+      success: (res) => {
+        const userData = res.data;
+        dispatch(setUser(userData));
+        localStorage.setItem("user", JSON.stringify(userData));
+        navigate("/dashboard");
+        return "Account created successfully!";
+      },
+      error: (err) => err.response?.data?.message || "Registration failed. Please try again.",
+    });
   };
 
+
   return (
-    <div className='w-full min-h-screen flex bg-white font-sans'>
-      {/* Left Side: Branding (Consistent with Login) */}
-      <div className='hidden lg:flex w-2/5 bg-mesh relative overflow-hidden items-center justify-center border-r border-dark-100'>
-        <div className='absolute inset-0 bg-gradient-to-br from-secondary-600/20 to-primary-600/20 z-0'></div>
-        
-        <div className='relative z-10 max-w-md px-12'>
-          <Link to='/' className='inline-flex items-center gap-2 text-primary-600 font-semibold mb-12 hover:gap-3 transition-all'>
-            <FiArrowLeft /> Back to Login
-          </Link>
-
-          <div className='flex items-center gap-3 mb-8'>
-            <div className='p-3 bg-secondary-600 rounded-2xl shadow-premium'>
-              <MdOutlineAddTask className='text-white text-3xl' />
-            </div>
-            <h1 className='text-3xl font-display font-bold tracking-tight text-dark-900'>TaskHub</h1>
-          </div>
-          
-          <h2 className='text-4xl font-display font-extrabold text-dark-900 leading-tight mb-6'>
-            Start your <span className='text-gradient'>journey</span> with us today.
-          </h2>
-          <p className='text-lg text-dark-600 mb-8 leading-relaxed'>
-            Join thousands of teams who have already transformed their productivity with TaskHub.
-          </p>
-
-          <div className='space-y-4'>
-            {['No credit card required', 'Unlimited collaborators', 'Advanced analytics', '24/7 Priority support'].map((feature, i) => (
-              <div key={i} className='flex items-center gap-3 text-dark-700 font-medium'>
-                <div className='w-6 h-6 rounded-full bg-secondary-100 text-secondary-600 flex items-center justify-center text-xs'>✓</div>
-                {feature}
+    <div className="flex min-h-screen bg-background">
+      {/* Left side - Visuals (Consistent with Login) */}
+      <div className="hidden lg:flex w-5/12 bg-primary items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
+        <div className="relative z-10 max-w-lg text-white">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
+              <ArrowLeft size={18} /> Back to Login
+            </Link>
+            
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center font-bold text-2xl border border-white/30">
+                T
               </div>
-            ))}
-          </div>
+              <span className="text-3xl font-bold tracking-tight text-white">Tasky</span>
+            </div>
+            
+            <h1 className="text-4xl font-extrabold leading-tight mb-6">
+              Join the future of <span className="text-white/80">productivity.</span>
+            </h1>
+            <p className="text-lg text-primary-foreground/80 mb-10 leading-relaxed">
+              Experience the most intuitive way to manage your work, automate your workflows, and grow your team.
+            </p>
+            
+            <div className="space-y-4">
+              {[
+                "14-day free trial",
+                "Unlimited projects & tasks",
+                "Integrated team chat",
+                "Custom reporting dashboards",
+              ].map((item, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <CheckCircle2 className="text-white/60" size={18} />
+                  <span className="font-medium">{item}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Right Side: Register Form */}
-      <div className='w-full lg:w-3/5 flex items-center justify-center p-8 bg-dark-50/30 lg:bg-white'>
-        <div className='w-full max-w-lg'>
-          <div className='lg:hidden flex items-center gap-3 mb-10'>
-            <div className='p-2 bg-secondary-600 rounded-xl'>
-              <MdOutlineAddTask className='text-white text-2xl' />
+      {/* Right side - Form */}
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 md:p-12 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-xl"
+        >
+          <div className="lg:hidden flex items-center gap-2 mb-10 justify-center">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">
+              T
             </div>
-            <h1 className='text-2xl font-display font-bold'>TaskHub</h1>
+            <span className="text-2xl font-bold tracking-tight text-foreground">Tasky</span>
           </div>
 
-          <div className='mb-10'>
-            <h3 className='text-3xl font-display font-bold text-dark-900 mb-2'>Create Account</h3>
-            <p className='text-dark-500'>Fill in the details below to get started with your 14-day free trial.</p>
+          <div className="mb-10 text-center lg:text-left">
+            <h2 className="text-3xl font-bold text-foreground mb-2">Create Account</h2>
+            <p className="text-muted-foreground">Start your journey with Tasky today.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div className='col-span-2 space-y-2'>
-              <label className='text-sm font-semibold text-dark-700 ml-1'>Full Name</label>
-              <div className='relative'>
-                <AiOutlineUser className='absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 text-xl z-10' />
-                <Textbox
-                  placeholder='John Doe'
-                  type='text'
-                  name='name'
-                  className='pl-12'
-                  register={register("name", {
-                    required: "Name is required!",
-                  })}
-                  error={errors.name?.message}
-                />
-              </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <Input
+                label="Full Name"
+                placeholder="John Doe"
+                type="text"
+                {...register("name", { required: "Name is required" })}
+                error={errors.name?.message}
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <Input
+                label="Email Address"
+                placeholder="name@company.com"
+                type="email"
+                {...register("email", { required: "Email is required" })}
+                error={errors.email?.message}
+              />
             </div>
 
-            <div className='col-span-2 space-y-2'>
-              <label className='text-sm font-semibold text-dark-700 ml-1'>Email Address</label>
-              <div className='relative'>
-                <AiOutlineMail className='absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 text-xl z-10' />
-                <Textbox
-                  placeholder='name@company.com'
-                  type='email'
-                  name='email'
-                  className='pl-12'
-                  register={register("email", {
-                    required: "Email is required!",
-                  })}
-                  error={errors.email?.message}
-                />
-              </div>
+            <div className="md:col-span-2">
+              <Input
+                label="Password"
+                placeholder="••••••••"
+                type="password"
+                {...register("password", { 
+                  required: "Password is required",
+                  minLength: { value: 6, message: "Minimum 6 characters" }
+                })}
+                error={errors.password?.message}
+              />
             </div>
 
-            <div className='col-span-2 space-y-2'>
-              <label className='text-sm font-semibold text-dark-700 ml-1'>Password</label>
-              <div className='relative'>
-                <AiOutlineLock className='absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 text-xl z-10' />
-                <Textbox
-                  placeholder='••••••••'
-                  type='password'
-                  name='password'
-                  className='pl-12'
-                  register={register("password", {
-                    required: "Password is required!",
-                  })}
-                  error={errors.password?.message}
-                />
-              </div>
-            </div>
-
-            <div className='col-span-2 flex items-start gap-2 px-1'>
-              <input type='checkbox' id='terms' className='mt-1 w-4 h-4 rounded border-dark-300 text-primary-600 focus:ring-primary-500' required />
-              <label htmlFor='terms' className='text-sm text-dark-600'>
-                I agree to the <Link to='#' className='text-primary-600 font-bold'>Terms of Service</Link> and <Link to='#' className='text-primary-600 font-bold'>Privacy Policy</Link>.
+            <div className="md:col-span-2 flex items-start gap-2">
+              <input 
+                type="checkbox" 
+                id="terms" 
+                className="mt-1 w-4 h-4 rounded border-input text-primary focus:ring-primary/20" 
+                required 
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground">
+                I agree to the <Link to="#" className="text-primary font-semibold hover:underline">Terms of Service</Link> and <Link to="#" className="text-primary font-semibold hover:underline">Privacy Policy</Link>.
               </label>
             </div>
 
-            <Button
-              type='submit'
-              label='Create Account'
-              className='col-span-2 btn-primary h-14 text-lg bg-gradient-to-r from-secondary-600 to-primary-600'
-            />
+            <div className="md:col-span-2">
+              <Button
+                type="submit"
+                label="Create Account"
+                className="w-full h-12 text-base shadow-lg shadow-primary/20"
+                isLoading={isSubmitting}
+              />
+            </div>
           </form>
 
-          <p className='mt-10 text-center text-dark-500 font-medium'>
+          <p className="mt-8 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link to='/' className='text-primary-600 font-bold hover:text-primary-700 transition-all'>
-              Sign in here
+            <Link to="/" className="font-semibold text-primary hover:underline">
+              Sign in
             </Link>
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

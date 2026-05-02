@@ -132,27 +132,42 @@ export const dashboardStatistics = async (req, res) => {
       return result;
     }, {});
 
-    // Group tasks by priority
-    const groupData = Object.entries(
-      allTasks.reduce((result, task) => {
-        const { priority } = task;
+    // Calculate weekly activity (tasks created per day for last 7 days)
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toLocaleDateString("en-US", { weekday: "short" });
+    }).reverse();
 
-        result[priority] = (result[priority] || 0) + 1;
-        return result;
-      }, {})
-    ).map(([name, total]) => ({ name, total }));
+    const activityData = last7Days.map(day => {
+      const count = allTasks.filter(task => {
+        const taskDay = new Date(task.createdAt).toLocaleDateString("en-US", { weekday: "short" });
+        return taskDay === day;
+      }).length;
+      return { name: day, total: count };
+    });
 
     // calculate total tasks
+
     const totalTasks = allTasks?.length;
     const last10Task = allTasks?.slice(0, 10);
 
+    // Calculate overdue tasks
+    const today = new Date();
+    const overdueTasks = allTasks.filter(task => 
+      new Date(task.date) < today && task.stage !== "completed"
+    ).length;
+
     const summary = {
       totalTasks,
+      overdueTasks,
       last10Task,
       users: isAdmin ? users : [],
       tasks: groupTaskks,
-      graphData: groupData,
+      graphData: activityData,
+
     };
+
 
     res.status(200).json({
       status: true,

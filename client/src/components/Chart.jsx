@@ -9,19 +9,60 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { chartData } from "../assets/data";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 
-export const Chart = () => {
+const chartData = [
+  { name: "Mon", total: 40 },
+  { name: "Tue", total: 30 },
+  { name: "Wed", total: 60 },
+  { name: "Thu", total: 45 },
+  { name: "Fri", total: 90 },
+  { name: "Sat", total: 20 },
+  { name: "Sun", total: 15 },
+];
+
+const Chart = ({ data = [] }) => {
   return (
-    <ResponsiveContainer width={"100%"} height={300}>
-      <BarChart width={150} height={40} data={chartData}>
-        <XAxis dataKey='name' />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <CartesianGrid strokeDasharray='3 3' />
-        <Bar dataKey='total' fill='#8884d8' />
-      </BarChart>
-    </ResponsiveContainer>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-xl font-bold">Activity Overview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data.length > 0 ? data : chartData}>
+
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+            <XAxis 
+              dataKey="name" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#64748b', fontSize: 12 }} 
+              dy={10}
+            />
+            <YAxis 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#64748b', fontSize: 12 }} 
+            />
+            <Tooltip 
+              cursor={{ fill: '#f1f5f9' }}
+              contentStyle={{ 
+                borderRadius: '8px', 
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}
+            />
+            <Bar 
+              dataKey="total" 
+              fill="#6366f1" 
+              radius={[4, 4, 0, 0]} 
+              barSize={32}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
   );
 };
+
+export default Chart;

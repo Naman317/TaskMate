@@ -1,194 +1,199 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import {
-  MdAttachFile,
-  MdKeyboardArrowDown,
-  MdKeyboardArrowUp,
-  MdKeyboardDoubleArrowUp,
-} from "react-icons/md";
-import { BiMessageAltDetail } from "react-icons/bi";
-import { FaList } from "react-icons/fa";
-import { IoMdAdd } from "react-icons/io";
-import { FiMoreHorizontal } from "react-icons/fi";
+  MoreVertical,
+  MessageSquare,
+  ListChecks,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Calendar,
+  AlertCircle,
+  TrendingUp,
+} from "lucide-react";
 import { useSelector } from "react-redux";
-import API from "../assets/axios";
+import { motion } from "framer-motion";
+import { Menu, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import { toast } from "sonner";
 
+import API from "../assets/axios";
 import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate } from "../utils";
 import AddSubTask from "./task/AddSubTask";
 import AddTask from "./task/AddTask";
 import ConfirmatioDialog from "./Dialogs";
 import UserInfo from "./UserInfo";
-
-const ICONS = {
-  high: <MdKeyboardDoubleArrowUp />,
-  medium: <MdKeyboardArrowUp />,
-  low: <MdKeyboardArrowDown />,
-};
+import { Card, CardContent, CardFooter } from "./ui/Card";
 
 const TaskCard = ({ task, onSubTaskAdded }) => {
   const { user } = useSelector((state) => state.auth);
   const [openSubtask, setOpenSubtask] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleView = () => {
-    navigate(`/task/${task._id}`);
-  };
-
-  const handleEdit = () => {
-    setOpenEdit(true);
-    setShowMenu(false);
-  };
-
-  const handleDeleteClick = () => {
-    setOpenDialog(true);
-    setShowMenu(false);
-  };
+  const handleView = () => navigate(`/task/${task._id}`);
+  const handleEdit = () => setOpenEdit(true);
+  const handleDeleteClick = () => setOpenDialog(true);
 
   const deleteHandler = async () => {
     try {
       await API.put(`task/${task._id}`);
-      window.location.reload();
+      toast.success("Task moved to trash");
+      if (onSubTaskAdded) onSubTaskAdded();
+      else window.location.reload();
     } catch (err) {
       console.error("Delete error:", err);
+      toast.error("Failed to delete task");
     }
   };
 
+  const priorityColors = {
+    high: "bg-rose-100 text-rose-700 border-rose-200",
+    medium: "bg-amber-100 text-amber-700 border-amber-200",
+    low: "bg-blue-100 text-blue-700 border-blue-200",
+  };
+
   return (
-    <>
-      <div className='w-full h-fit bg-white shadow-md p-4 rounded relative'>
-        <div className='w-full flex justify-between items-start'>
-          <div
-            className={clsx(
-              "flex gap-1 items-center text-sm font-medium",
-              PRIOTITYSTYELS[task?.priority]
-            )}
-          >
-            <span className='text-lg'>{ICONS[task?.priority]}</span>
-            <span className='uppercase'>{task?.priority} Priority</span>
-          </div>
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className="w-full"
+    >
+      <Card className="group border-border/50 hover:border-primary/30 hover:shadow-premium transition-all overflow-visible">
+        <CardContent className="p-5">
+          <div className="flex justify-between items-start mb-4">
+            <span className={clsx(
+              "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+              priorityColors[task?.priority]
+            )}>
+              {task?.priority} Priority
+            </span>
 
-          <div className='relative' ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className='p-1 hover:bg-gray-200 rounded-full'
-            >
-              <FiMoreHorizontal size={18} />
-            </button>
-            {showMenu && (
-              <div className='absolute right-0 mt-2 bg-white border rounded shadow-md w-36 z-50'>
-                <button
-                  onClick={handleView}
-                  className='block w-full text-left px-4 py-2 text-sm hover:bg-gray-100'
-                >
-                  View
-                </button>
-                <button
-                  onClick={handleEdit}
-                  className='block w-full text-left px-4 py-2 text-sm hover:bg-gray-100'
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDeleteClick}
-                  className='block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100'
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className='mt-2 flex items-center gap-2'>
-          <div className={clsx("w-4 h-4 rounded-full", TASK_TYPE[task.stage])} />
-          <h4 className='line-clamp-1 text-black'>{task?.title}</h4>
-        </div>
-
-        {task.createdByRole === "admin" && (
-          <span className='text-[11px] font-medium bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded mt-1 inline-block'>
-    Assigned by {task?.createdBy?.name}
-          </span>
-        )}
-
-        <span className='text-sm text-gray-600'>
-          {formatDate(new Date(task?.date))}
-        </span>
-
-        <div className='border-t my-2 border-gray-200' />
-
-        <div className='flex items-center justify-between mb-2'>
-          <div className='flex gap-3 text-sm text-gray-600'>
-            <div className='flex gap-1 items-center'>
-              <BiMessageAltDetail />
-              <span>{task?.activities?.length}</span>
-            </div>
-            <div className='flex gap-1 items-center'>
-              <FaList />
-              <span>0/{task?.subTasks?.length}</span>
-            </div>
-          </div>
-
-          <div className='flex -space-x-1'>
-            {task?.team?.map((m, i) => (
-              <div
-                key={i}
-                className={clsx(
-                  "w-7 h-7 rounded-full text-white flex items-center justify-center text-sm",
-                  BGS[i % BGS.length]
-                )}
+            <Menu as="div" className="relative">
+              <Menu.Button className="p-1.5 rounded-md hover:bg-accent text-muted-foreground transition-colors">
+                <MoreVertical size={16} />
+              </Menu.Button>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
               >
-                <UserInfo user={m} />
-              </div>
-            ))}
+                <Menu.Items className="absolute right-0 mt-1 w-36 origin-top-right rounded-lg border bg-card p-1 shadow-lg z-50 outline-none">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleView}
+                        className={clsx(
+                          "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md",
+                          active ? "bg-accent" : ""
+                        )}
+                      >
+                        <Eye size={14} /> View
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleEdit}
+                        className={clsx(
+                          "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md",
+                          active ? "bg-accent" : ""
+                        )}
+                      >
+                        <Edit size={14} /> Edit
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleDeleteClick}
+                        className={clsx(
+                          "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md text-red-500",
+                          active ? "bg-red-500/10" : ""
+                        )}
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    )}
+                  </Menu.Item>
+                </Menu.Items>
+              </Transition>
+            </Menu>
           </div>
-        </div>
 
-        {task?.subTasks?.length > 0 ? (
-          <div className='py-4 border-t border-gray-200'>
-            <h5 className='text-base line-clamp-1 text-black'>
-              {task?.subTasks[0].title}
-            </h5>
-            <div className='p-4 space-x-8'>
-              <span className='text-sm text-gray-600'>
-                {formatDate(new Date(task?.subTasks[0]?.date))}
-              </span>
-              <span className='bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium'>
-                {task?.subTasks[0].tag}
-              </span>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className={clsx("w-2 h-2 rounded-full mt-2 shrink-0", 
+                task.stage === "todo" ? "bg-rose-500" : 
+                task.stage === "in progress" ? "bg-amber-500" : "bg-emerald-500"
+              )} />
+              <h4 className="font-bold text-foreground leading-tight group-hover:text-primary transition-colors cursor-pointer" onClick={handleView}>
+                {task?.title}
+              </h4>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+              <Calendar size={12} />
+              {formatDate(new Date(task?.date))}
+            </div>
+
+            {task.createdByRole === "admin" && (
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 rounded border border-primary/10 w-fit">
+                <TrendingUp size={10} className="text-primary" />
+                <span className="text-[10px] font-semibold text-primary/80">
+                  Assigned by {task?.createdBy?.name}
+                </span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+
+        <CardFooter className="px-5 py-4 bg-accent/50 border-t flex flex-col gap-4">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex gap-4 text-muted-foreground">
+              <div className="flex gap-1 items-center hover:text-foreground transition-colors cursor-help" title="Comments">
+                <MessageSquare size={14} />
+                <span className="text-xs font-medium">{task?.activities?.length}</span>
+              </div>
+              <div className="flex gap-1 items-center hover:text-foreground transition-colors cursor-help" title="Subtasks">
+                <ListChecks size={14} />
+                <span className="text-xs font-medium">0/{task?.subTasks?.length}</span>
+              </div>
+            </div>
+
+            <div className="flex -space-x-2">
+              {task?.team?.slice(0, 3).map((m, i) => (
+                <div key={i} title={m.name}>
+                  <UserInfo user={m} />
+                </div>
+              ))}
+              {task?.team?.length > 3 && (
+                <div className="w-7 h-7 rounded-full bg-background border-2 border-accent flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                  +{task?.team?.length - 3}
+                </div>
+              )}
             </div>
           </div>
-        ) : (
-          <div className='py-4 border-t border-gray-200 text-gray-500'>
-            No Sub Task
-          </div>
-        )}
 
-        <div className='w-full pb-2'>
           <button
             onClick={() => setOpenSubtask(true)}
             disabled={!user.isAdmin}
-            className='w-full flex gap-4 items-center text-sm text-gray-500 font-semibold disabled:cursor-not-allowed'
+            className="flex items-center gap-2 text-[10px] font-bold text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors uppercase tracking-widest"
           >
-            <IoMdAdd className='text-lg' />
-            <span>ADD SUBTASK</span>
+            <Plus size={14} />
+            Add Subtask
           </button>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
 
       <AddSubTask
         open={openSubtask}
@@ -204,7 +209,7 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
         setOpen={setOpenDialog}
         onClick={deleteHandler}
       />
-    </>
+    </motion.div>
   );
 };
 

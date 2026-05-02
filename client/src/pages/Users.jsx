@@ -1,29 +1,37 @@
 import React, { useState, useEffect } from "react";
-import Title from "../components/Title";
-import Button from "../components/Button";
-import { IoMdAdd } from "react-icons/io";
-import { getInitials } from "../utils";
-import ConfirmatioDialog, { UserAction } from "../components/Dialogs";
-import AddUser from "../components/AddUser";
-import API from "../assets/axios";
+import { UserPlus, Mail, Shield, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+
+import API from "../assets/axios";
+import { getInitials } from "../utils";
+import ConfirmatioDialog from "../components/Dialogs";
+import AddUser from "../components/AddUser";
+import Button from "../components/ui/Button";
+import { Card, CardContent } from "../components/ui/Card";
+import Skeleton from "../components/ui/Skeleton";
 
 const Users = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
-  const [openAction, setOpenAction] = useState(false);
   const [selected, setSelected] = useState(null);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const currentUser = useSelector((state) => state.auth.user);
   const isSuperAdmin = currentUser?.email === "admin@gmail.com";
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const res = await API.get("/user/get-team");
       setUsers(res.data || []);
     } catch (err) {
       console.error("Failed to fetch users", err);
+      toast.error("Failed to fetch team members");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,14 +42,17 @@ const Users = () => {
   const handleRoleChange = async (userId, newRole) => {
     try {
       await API.put(`/user/update-role/${userId}`, { role: newRole });
+      toast.success("Role updated successfully");
       fetchUsers();
     } catch (err) {
-      alert("Role update failed");
+      toast.error("Role update failed");
     }
   };
 
   const deleteHandler = async () => {
-    // You can implement the delete user API here
+    // Implement delete user API if available
+    toast.info("Delete functionality coming soon");
+    setOpenDialog(false);
   };
 
   const deleteClick = (id) => {
@@ -54,120 +65,151 @@ const Users = () => {
     setOpen(true);
   };
 
-  const TableHeader = () => (
-    <thead className='border-b border-gray-300'>
-      <tr className='text-black text-left'>
-        <th className='py-2'>Full Name</th>
-        <th className='py-2'>Email</th>
-        <th className='py-2'>Role</th>
-        {isSuperAdmin && <th className='py-2 text-right'>Actions</th>}
-      </tr>
-    </thead>
-  );
-
-  const TableRow = ({ user }) => {
-    if (!user || typeof user !== "object") return null;
-
-    const {
-      _id,
-      name = "No Name",
-      email = "No Email",
-      role = "user",
-    } = user;
-
+  if (loading) {
     return (
-      <tr className='border-b border-gray-200 text-gray-600 hover:bg-gray-400/10'>
-        <td className='p-2'>
-          <div className='flex items-center gap-3'>
-            <div className='w-9 h-9 rounded-full text-white flex items-center justify-center text-sm bg-blue-700'>
-              <span className='text-xs md:text-sm text-center'>
-                {getInitials(name)}
-              </span>
-            </div>
-            {name}
-          </div>
-        </td>
-
-        <td className='p-2'>{email}</td>
-
-        <td className='p-2'>
-          {isSuperAdmin ? (
-            <select
-              value={role}
-              onChange={(e) => handleRoleChange(_id, e.target.value)}
-              className='border rounded px-2 py-1'
-            >
-              <option value='user'>User</option>
-              <option value='admin'>Admin</option>
-            </select>
-          ) : (
-            role
-          )}
-        </td>
-
-        {isSuperAdmin && (
-          <td className='p-2 flex gap-4 justify-end'>
-            <Button
-              className='text-blue-600 hover:text-blue-500 font-semibold sm:px-0'
-              label='Edit'
-              type='button'
-              onClick={() => editClick(user)}
-            />
-            <Button
-              className='text-red-700 hover:text-red-500 font-semibold sm:px-0'
-              label='Delete'
-              type='button'
-              onClick={() => deleteClick(_id)}
-            />
-          </td>
-        )}
-      </tr>
+      <div className="space-y-6 animate-in">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-16 w-full border-b" />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     );
-  };
+  }
 
   return (
-    <>
-      <div className='w-full md:px-1 px-0 mb-6'>
-        <div className='flex items-center justify-between mb-8'>
-          <Title title='Team Members' />
-          <Button
-            label='Add New User'
-            icon={<IoMdAdd className='text-lg' />}
-            className='flex flex-row-reverse gap-1 items-center bg-blue-600 text-white rounded-md 2xl:py-2.5'
-            onClick={() => setOpen(true)}
-          />
+    <div className="space-y-6 animate-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
+          <p className="text-muted-foreground">Manage your team and their access levels.</p>
         </div>
+        <Button
+          label="Add New User"
+          icon={<UserPlus size={18} />}
+          onClick={() => {
+            setSelected(null);
+            setOpen(true);
+          }}
+        />
+      </div>
 
-        <div className='bg-white px-2 md:px-4 py-4 shadow-md rounded'>
-          <div className='overflow-x-auto'>
-            <table className='w-full mb-5'>
-              <TableHeader />
-              <tbody>
-                {Array.isArray(users) && users.length > 0 ? (
-                  users.map((user, index) => (
-                    <TableRow key={user._id || index} user={user} />
+      <Card className="overflow-hidden border-border/50 shadow-premium">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-4">Full Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Role</th>
+                  {isSuperAdmin && <th className="px-6 py-4 text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {users.length > 0 ? (
+                  users.map((user, idx) => (
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      key={user._id}
+                      className="group hover:bg-accent/30 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shrink-0">
+                            {getInitials(user?.name)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground leading-none">{user.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Active now</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Mail size={14} />
+                          {user.email}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {isSuperAdmin ? (
+                          <div className="relative inline-flex items-center gap-2">
+                            <Shield size={14} className="text-primary" />
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                              className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none"
+                            >
+                              <option value="user">User</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                        ) : (
+                          <span className={clsx(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
+                            user.role === "admin" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200"
+                          )}>
+                            <Shield size={10} />
+                            {user.role}
+                          </span>
+                        )}
+                      </td>
+
+                      {isSuperAdmin && (
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              icon={<Edit size={16} />}
+                              onClick={() => editClick(user)}
+                              title="Edit User"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              icon={<Trash2 size={16} />}
+                              onClick={() => deleteClick(user._id)}
+                              title="Delete User"
+                            />
+                          </div>
+                        </td>
+                      )}
+                    </motion.tr>
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan={isSuperAdmin ? 4 : 3}
-                      className='p-4 text-center text-gray-500'
-                    >
-                      No users found.
+                    <td colSpan={isSuperAdmin ? 4 : 3} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <UsersIcon size={40} strokeWidth={1} />
+                        <p>No team members found.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <AddUser
         open={open}
         setOpen={setOpen}
         userData={selected}
-        key={new Date().getTime().toString()}
+        key={selected?._id || "new-user"}
+        refresh={fetchUsers}
       />
 
       <ConfirmatioDialog
@@ -175,13 +217,7 @@ const Users = () => {
         setOpen={setOpenDialog}
         onClick={deleteHandler}
       />
-
-      <UserAction
-        open={openAction}
-        setOpen={setOpenAction}
-        onClick={() => {}}
-      />
-    </>
+    </div>
   );
 };
 

@@ -1,8 +1,21 @@
 import axios from "axios";
+import store from "../redux/store";
+import { logoutUser } from "../redux/slices/authSlice";
 
 const API = axios.create({
-  baseURL:"https://tasky-j89h.onrender.com/api"||"http://localhost:5055/api",
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_APP_BASE_URL + "/api" || "http://localhost:5055/api",
+  withCredentials: true,
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      store.dispatch(logoutUser());
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default API;
+
