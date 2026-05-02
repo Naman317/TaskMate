@@ -18,17 +18,30 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  process.env.FRONTEND_URL,
-  "https://tasky-one-iota.vercel.app"
-].filter(Boolean);
+  "https://tasky-one-iota.vercel.app",
+];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      const isAllowed = allowedOrigins.includes(origin) || 
+                       origin.endsWith(".vercel.app") || 
+                       process.env.FRONTEND_URL === origin;
+                       
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     credentials: true,
   })
 );
+
 
 
 app.use(express.json());
