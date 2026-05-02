@@ -1,0 +1,11 @@
+{
+  "name": "tasky-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm install && chmod +x node_modules/.bin/vite && npm run build",
+    "client-build": "cd client && npm install && npm run build",
+    "server-start": "cd server && npm install && npm start"
+  }
+}

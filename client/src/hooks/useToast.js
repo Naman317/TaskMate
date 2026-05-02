@@ -32,13 +32,23 @@ export const useToast = () => {
   /**
    * Standardized promise toast for async operations
    * @param {Promise} promise - The async operation
-   * @param {Object} messages - Loading, success, and error messages
+   * @param {Object} handlers - Loading, success, and error handlers
    */
-  const promise = (promise, { loading, success, error }) => {
-    return toast.promise(promise, {
+  const promise = (operation, { loading, success, error }) => {
+    return toast.promise(operation, {
       loading: loading || "Processing...",
-      success: (data) => success || "Operation completed successfully",
-      error: (err) => error || err?.response?.data?.message || "Something went wrong",
+      success: (data) => {
+        if (typeof success === "function") {
+          return success(data);
+        }
+        return success || "Operation completed successfully";
+      },
+      error: (err) => {
+        if (typeof error === "function") {
+          return error(err);
+        }
+        return error || err?.response?.data?.message || err?.message || "Something went wrong";
+      },
     });
   };
 
