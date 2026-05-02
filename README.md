@@ -19,8 +19,14 @@ Tasky implements a strict 3-tier hierarchy to ensure organizational security:
 
 *   **Modern Aesthetics**: Built with Tailwind CSS, featuring subtle glassmorphism, fluid Framer Motion animations, and responsive mobile drawers.
 
-*   **Subtask Management**: Break complex tasks into manageable subtasks with independent completion tracking.
-*   **Voice-to-Task Commands**: Use browser-native voice recognition to initialize task creation hands-free.
+*   **Advanced Voice Commands**: Use browser-native voice recognition to control the entire application hands-free. Click the microphone icon and try saying:
+    *   **"Create task [name]"** - Opens the task creation modal pre-filled with your task name.
+    *   **"Search for [keyword]"** - Instantly filters your view for specific terms.
+    *   **"Move [task] to in progress"** - Magically moves a task across the board via API.
+    *   **"Mark [task] as completed"** - Instantly closes out a task.
+    *   **"Switch to list view"** - Toggles the layout instantly.
+    *   **"Export tasks"** - Triggers a CSV download of your current view.
+
 *   **Automated Overdue Tracking**: The system intelligently calculates overdue tasks and surfaces them on a dedicated dashboard tab.
 
 

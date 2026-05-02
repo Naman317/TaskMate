@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter, Download } from "lucide-react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
@@ -13,54 +13,41 @@ import BoardView from "../components/BoardView";
 import Table from "../components/task/Table";
 import AddTask from "../components/task/AddTask";
 import useToast from "../hooks/useToast";
-import { useGetTasksQuery, useDeleteRestoreTaskMutation } from "../redux/api/taskApiSlice";
+import { useGetTasksQuery, useDeleteRestoreTaskMutation, useUpdateTaskMutation } from "../redux/api/taskApiSlice";
+import { useSelector } from "react-redux";
+
+
 
 const Tasks = () => {
   const params = useParams();
+  const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useSelector((state) => state.auth);
   const [listening, setListening] = useState(false);
   const [view, setView] = useState("board"); // "board" or "list"
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [prefillData, setPrefillData] = useState(null);
 
   const status = params?.status || "";
   const isTrashed = status === "trashed";
   const isOverdueTab = status === "overdue";
 
-  // SDE 2 move: Using RTK Query for data fetching
   const { data, isLoading, error, refetch } = useGetTasksQuery({
     stage: (status !== "trashed" && status !== "overdue") ? status : "",
     isTrashed,
   });
 
-
   const [deleteRestoreTask] = useDeleteRestoreTaskMutation();
-
-  const handleVoiceCommand = (command) => {
-    const lowerCommand = command.toLowerCase();
-    if (lowerCommand.includes("create task") || lowerCommand.includes("add task")) {
-      setOpen(true);
-    }
-  };
-
-  const startVoiceRecognition = () => {
-    if (!("webkitSpeechRecognition" in window)) {
-      toast.error("Voice recognition not supported");
-      return;
-    }
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.onstart = () => setListening(true);
-    recognition.onresult = (e) => handleVoiceCommand(e.results[0][0].transcript);
-    recognition.onend = () => setListening(false);
-    recognition.start();
-  };
+  const [updateTask] = useUpdateTaskMutation();
 
   const handleDelete = async (taskId) => {
     try {
       await deleteRestoreTask({ id: taskId, actionType: "delete" }).unwrap();
-      toast.success("Task deleted");
+      toast.success("Task deleted successfully");
     } catch (err) {
-      toast.error("Failed to delete task");
+      toast.error(err?.data?.message || "Failed to delete task");
     }
   };
 
@@ -89,6 +76,160 @@ const Tasks = () => {
     toast.success("Tasks exported successfully!");
   };
 
+  const handleVoiceCommand = async (command) => {
+    const lowerCommand = command.toLowerCase().trim();
+    
+    // View Toggling
+    if (lowerCommand.includes("switch to list view") || lowerCommand.includes("list view")) {
+      setView("list");
+      toast.success("Switched to List View");
+      return;
+    }
+    if (lowerCommand.includes("switch to board view") || lowerCommand.includes("board view")) {
+      setView("board");
+      toast.success("Switched to Board View");
+      return;
+    }
+
+    // Navigation
+    if (lowerCommand.includes("go to dashboard") || lowerCommand.includes("open dashboard")) {
+      navigate("/dashboard");
+      return;
+    }
+    if (lowerCommand.includes("go to trash") || lowerCommand.includes("open trash")) {
+      navigate("/trashed");
+      return;
+    }
+
+    // Searching
+    if (lowerCommand.startsWith("search for ")) {
+      const q = lowerCommand.replace("search for ", "").trim();
+      setSearchQuery(q);
+      toast.success(`Searching for "${q}"`);
+      return;
+    }
+    if (lowerCommand === "clear search") {
+      setSearchQuery("");
+      toast.success("Search cleared");
+      return;
+    }
+
+    // Export Data
+    if (lowerCommand.includes("export tasks") || lowerCommand.includes("download csv") || lowerCommand.includes("export to csv")) {
+      exportToCSV();
+      return;
+    }
+
+    // Stage Movement
+    if (lowerCommand.startsWith("move ") && lowerCommand.includes(" to ")) {
+      const match = lowerCommand.match(/^move\s+(.+)\s+to\s+(.+)$/);
+      if (match) {
+        const titleToFind = match[1].trim();
+        let targetStage = match[2].trim();
+        
+        if (targetStage === "to do") targetStage = "todo";
+        
+        if (!["todo", "in progress", "completed"].includes(targetStage)) {
+          toast.error(`Unknown stage "${targetStage}". Try "todo", "in progress", or "completed".`);
+          return;
+        }
+
+        const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+        if (taskToMove) {
+          try {
+            await updateTask({
+              id: taskToMove._id,
+              data: { ...taskToMove, stage: targetStage, team: taskToMove.team?.map(t => t._id || t) }
+            }).unwrap();
+            toast.success(`Moved "${taskToMove.title}" to ${targetStage}`);
+          } catch (err) {
+             toast.error(err?.data?.message || "Failed to move task");
+          }
+        } else {
+          toast.error(`Could not find task "${titleToFind}"`);
+        }
+        return;
+      }
+    }
+
+    if (lowerCommand.startsWith("mark ") && lowerCommand.includes(" as completed")) {
+      const titleToFind = lowerCommand.replace("mark ", "").replace(" as completed", "").trim();
+      const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+      if (taskToMove) {
+          try {
+            await updateTask({
+              id: taskToMove._id,
+              data: { ...taskToMove, stage: "completed", team: taskToMove.team?.map(t => t._id || t) }
+            }).unwrap();
+            toast.success(`Marked "${taskToMove.title}" as completed`);
+          } catch (err) {
+             toast.error(err?.data?.message || "Failed to mark as completed");
+          }
+      } else {
+        toast.error(`Could not find task "${titleToFind}"`);
+      }
+      return;
+    }
+
+    if (lowerCommand.startsWith("create task ") || lowerCommand.startsWith("add task ")) {
+      const title = command.replace(/create task |add task /i, "").trim();
+      setPrefillData({ title, priority: "normal" });
+      setSelectedTask(null);
+      setOpen(true);
+      return;
+    }
+
+    if (lowerCommand === "create task" || lowerCommand === "add task") {
+      setPrefillData(null);
+      setSelectedTask(null);
+      setOpen(true);
+      return;
+    }
+
+    if (lowerCommand.startsWith("edit task ")) {
+      const titleToFind = lowerCommand.replace("edit task ", "").trim();
+      const taskToEdit = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+      if (taskToEdit) {
+        setSelectedTask(taskToEdit);
+        setPrefillData(null);
+        setOpen(true);
+      } else {
+        toast.error(`Could not find task "${titleToFind}" to edit.`);
+      }
+      return;
+    }
+
+    if (lowerCommand.startsWith("delete task ")) {
+      const titleToFind = lowerCommand.replace("delete task ", "").trim();
+      const taskToDelete = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+      
+      if (taskToDelete) {
+        if (taskToDelete.createdByRole === "admin" && user?.role !== "admin") {
+          toast.error("You are not authorized to delete this admin-created task.");
+          return;
+        }
+        handleDelete(taskToDelete._id);
+      } else {
+        toast.error(`Could not find task "${titleToFind}" to delete.`);
+      }
+      return;
+    }
+    
+    toast.error("Command not recognized.");
+  };
+
+  const startVoiceRecognition = () => {
+    if (!("webkitSpeechRecognition" in window)) {
+      toast.error("Voice recognition not supported");
+      return;
+    }
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.onstart = () => setListening(true);
+    recognition.onresult = (e) => handleVoiceCommand(e.results[0][0].transcript);
+    recognition.onend = () => setListening(false);
+    recognition.start();
+  };
+
   const filteredTasks = data?.tasks?.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     if (isOverdueTab) {
@@ -97,6 +238,7 @@ const Tasks = () => {
     }
     return matchesSearch;
   }) || [];
+
 
 
   if (isLoading) {
@@ -179,7 +321,11 @@ const Tasks = () => {
           <Button
             label="Create Task"
             icon={<Plus size={18} />}
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              setSelectedTask(null);
+              setPrefillData(null);
+              setOpen(true);
+            }}
           />
 
         </div>
@@ -207,7 +353,11 @@ const Tasks = () => {
               label="Create your first task"
               variant="outline"
               className="mt-6"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                setSelectedTask(null);
+                setPrefillData(null);
+                setOpen(true);
+              }}
             />
           )}
         </div>
@@ -215,11 +365,20 @@ const Tasks = () => {
 
       <AddTask
         open={open}
-        setOpen={setOpen}
+        setOpen={(val) => {
+          setOpen(val);
+          if (!val) {
+            setSelectedTask(null);
+            setPrefillData(null);
+          }
+        }}
+        task={selectedTask}
+        prefillData={prefillData}
         refresh={refetch}
       />
     </div>
   );
 };
+
 
 export default Tasks;
