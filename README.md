@@ -1,8 +1,8 @@
-#  Tasky - Advanced SaaS Task Management Platform
+#  Tasky - Task Management Platform
 
-Tasky is a professional, enterprise-ready task management platform built with the MERN stack. Designed with a focus on high performance, modern UI/UX aesthetics, and scalable architecture, Tasky provides teams with an intuitive environment to organize, track, and complete their work efficiently.
+Tasky is a professional, task management platform built with the MERN stack. Designed with a focus on high performance, modern UI/UX aesthetics, and scalable architecture, Tasky provides teams with an intuitive environment to organize, track, and complete their work efficiently.
 
-![Tasky Dashboard](https://via.placeholder.com/1200x600?text=Tasky+SaaS+Platform)
+![Tasky](https://tasky-one-iota.vercel.app/)
 
 ---
 
