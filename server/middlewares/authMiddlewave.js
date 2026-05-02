@@ -9,12 +9,13 @@ const protectRoute = async (req, res, next) => {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
       const resp = await User.findById(decodedToken.userId).select(
-        "isAdmin email"
+        "isAdmin email role"
       );
 
       req.user = {
         email: resp.email,
         isAdmin: resp.isAdmin,
+        role: resp.role,
         userId: decodedToken.userId,
       };
 
@@ -33,7 +34,7 @@ const protectRoute = async (req, res, next) => {
 };
 
 const isAdminRoute = (req, res, next) => {
-  if (req.user && req.user?.role ==="admin") {
+  if (req.user && req.user.isAdmin) {
     next();
   } else {
     return res.status(401).json({
@@ -42,6 +43,7 @@ const isAdminRoute = (req, res, next) => {
     });
   }
 };
+
 const allowRoles = (...roles) => {
   return (req, res, next) => {
     if (req.user && roles.includes(req.user.role)) {
