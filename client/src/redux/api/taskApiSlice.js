@@ -28,7 +28,24 @@ export const taskApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => ["Task", { type: "Task", id }],
+      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData("getTasks", { stage: "", isTrashed: false }, (draft) => {
+            const task = draft?.tasks?.find((t) => t._id === id);
+            if (task) {
+              if (data.stage) task.stage = data.stage;
+              if (data.title) task.title = data.title;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
     }),
+
     trashTask: builder.mutation({
       query: (id) => ({
         url: `/task/${id}`,

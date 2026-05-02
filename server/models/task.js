@@ -37,7 +37,9 @@ const taskSchema = new Schema(
             "completed",
             "commented",
             "subtask",
+            "update",
           ],
+
         },
         activity: String,
         date: { type: Date, default: new Date() },

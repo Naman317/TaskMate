@@ -15,8 +15,10 @@ import Tasks from "./pages/Tasks";
 import TaskDetails from "./pages/TaskDetails";
 import Trash from "./pages/Trash";
 import Users from "./pages/Users";
+import CommandPalette from "./components/CommandPalette";
 
 function App() {
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -52,8 +54,11 @@ function App() {
         expand={false} 
         closeButton 
       />
+      
+      <CommandPalette />
     </main>
   );
 }
 
 export default App;
+

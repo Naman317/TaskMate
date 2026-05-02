@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter } from "lucide-react";
+import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter, Download } from "lucide-react";
+
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -24,12 +25,14 @@ const Tasks = () => {
 
   const status = params?.status || "";
   const isTrashed = status === "trashed";
+  const isOverdueTab = status === "overdue";
 
   // SDE 2 move: Using RTK Query for data fetching
   const { data, isLoading, error, refetch } = useGetTasksQuery({
-    stage: status !== "trashed" ? status : "",
+    stage: (status !== "trashed" && status !== "overdue") ? status : "",
     isTrashed,
   });
+
 
   const [deleteRestoreTask] = useDeleteRestoreTaskMutation();
 
@@ -61,9 +64,40 @@ const Tasks = () => {
     }
   };
 
-  const filteredTasks = data?.tasks?.filter((task) => 
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const exportToCSV = () => {
+    if (!data?.tasks?.length) return toast.error("No tasks to export");
+    const headers = ["Title", "Stage", "Priority", "Due Date", "Created At"];
+    const csvContent = [
+      headers.join(","),
+      ...data.tasks.map(t => [
+        `"${t.title.replace(/"/g, '""')}"`,
+        t.stage,
+        t.priority,
+        new Date(t.date).toLocaleDateString(),
+        new Date(t.createdAt).toLocaleDateString()
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `tasks_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Tasks exported successfully!");
+  };
+
+  const filteredTasks = data?.tasks?.filter((task) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    if (isOverdueTab) {
+      const taskIsOverdue = new Date(task.date) < new Date() && task.stage !== "completed";
+      return matchesSearch && taskIsOverdue;
+    }
+    return matchesSearch;
+  }) || [];
+
 
   if (isLoading) {
     return (
@@ -128,10 +162,18 @@ const Tasks = () => {
           </div>
 
           <Button
+            variant="outline"
+            icon={<Download size={18} />}
+            onClick={exportToCSV}
+            className="hidden md:flex"
+            label="Export"
+          />
+
+          <Button
             variant={listening ? "secondary" : "outline"}
             icon={listening ? <Mic className="animate-pulse text-red-500" size={18} /> : <Mic size={18} />}
             onClick={startVoiceRecognition}
-            className="hidden md:flex"
+            className="hidden lg:flex"
           />
 
           <Button
@@ -139,6 +181,7 @@ const Tasks = () => {
             icon={<Plus size={18} />}
             onClick={() => setOpen(true)}
           />
+
         </div>
       </div>
 
