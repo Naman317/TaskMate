@@ -22,10 +22,15 @@ const BoardView = ({ tasks }) => {
 
       await updateTask({
         id: draggableId,
-        data: { ...task, stage: destination.droppableId },
+        data: { 
+          ...task, 
+          team: task.team?.map(t => t._id || t),
+          stage: destination.droppableId 
+        },
       }).unwrap();
 
       toast.success(`Moved to ${destination.droppableId}`);
+
     } catch (err) {
       toast.error("Failed to move task");
     }

@@ -8,6 +8,9 @@ import SelectList from "../SelectList";
 import Button from "../Button";
 import API from "../../assets/axios";
 import { useSelector } from "react-redux";
+import { useCreateTaskMutation, useUpdateTaskMutation } from "../../redux/api/taskApiSlice";
+import { toast } from "sonner";
+
 
 const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"];
 const PRIORITY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
@@ -68,8 +71,11 @@ const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
     }
   }, [prefillData, isAdmin, user, reset]);
 
+  const [createTask] = useCreateTaskMutation();
+  const [updateTask] = useUpdateTaskMutation();
+
   const submitHandler = async (data) => {
-    if (isUserNotAllowed) return alert("You can't edit an admin-created task");
+    if (isUserNotAllowed) return toast.error("You can't edit an admin-created task");
 
     try {
       setUploading(true);
@@ -83,24 +89,24 @@ const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
       };
 
       if (isEditMode) {
-        await API.put(`/task/update/${task._id}`, payload, {
-          withCredentials: true,
-        });
+        await updateTask({ id: task._id, data: payload }).unwrap();
+        toast.success("Task updated successfully");
       } else {
-        await API.post("/task/create", payload, {
-          withCredentials: true,
-        });
+        await createTask(payload).unwrap();
+        toast.success("Task created successfully");
       }
 
       setUploading(false);
       setOpen(false);
-      if (refresh) refresh();
+      // RTK Query handles refetching automatically via invalidatesTags
+      // if (refresh) refresh(); 
     } catch (err) {
-      console.error("Error submitting task:", err.response?.data || err.message);
-      alert("Failed to submit task.");
+      console.error("Error submitting task:", err);
+      toast.error(err?.data?.message || "Failed to submit task.");
       setUploading(false);
     }
   };
+
 
   return (
     <ModalWrapper open={open} setOpen={setOpen}>

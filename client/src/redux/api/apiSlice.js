@@ -11,7 +11,10 @@ export const apiSlice = createApi({
       // but if we were using tokens, we'd add them here.
       return headers;
     },
+    credentials: "include",
   }),
+
+
   tagTypes: ["Task", "User", "Notification"],
   endpoints: (builder) => ({}),
 });
