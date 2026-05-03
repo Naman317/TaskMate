@@ -55,11 +55,6 @@ const ProfileModal = ({ open, setOpen, user }) => {
             label="Close" 
             onClick={() => setOpen(false)} 
           />
-          <Button 
-            variant="primary" 
-            label="Edit Profile" 
-            onClick={() => {}} // Placeholder for now
-          />
         </div>
       </div>
     </ModalWrapper>

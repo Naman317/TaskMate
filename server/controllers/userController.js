@@ -122,22 +122,25 @@ export const markAllNotiRead = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const { userId, isAdmin } = req.user;
+    const { userId } = req.user;
     const { _id } = req.body;
+    const isSuperAdmin = req.user.email?.toLowerCase() === "admin@gmail.com";
 
     const id =
-      isAdmin && userId === _id
-        ? userId
-        : isAdmin && userId !== _id
-          ? _id
-          : userId;
+      isSuperAdmin && _id && userId !== _id
+        ? _id
+        : userId;
 
     const user = await User.findById(id);
 
     if (user) {
       user.name = req.body.name || user.name;
       user.title = req.body.title || user.title;
-      user.role = req.body.role || user.role;
+      
+      if (isSuperAdmin && req.body.role) {
+        user.role = req.body.role;
+        user.isAdmin = req.body.role === "admin";
+      }
 
       const updatedUser = await user.save();
 
@@ -164,13 +167,19 @@ export const updateUserRole = async (req, res) => {
     const user = req.user;
 
     // Only super admin can update roles
-    if (user.email !== "admin@gmail.com") {
-      return res.status(403).json({ message: "Unauthorized" });
+    if (user.email?.toLowerCase() !== "admin@gmail.com") {
+      return res.status(403).json({ message: `Unauthorized. (Current: ${user?.email})` });
     }
 
     // Validate allowed roles
     if (!["user", "admin"].includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
+    }
+
+    // Prevent changing super admin's role
+    const targetUser = await User.findById(id);
+    if (targetUser?.email?.toLowerCase() === "admin@gmail.com") {
+      return res.status(403).json({ message: "Cannot change Super Admin's role" });
     }
 
     // Set isAdmin based on role
@@ -252,8 +261,13 @@ export const deleteUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Only super admin can delete users
+    if (req.user.email?.toLowerCase() !== "admin@gmail.com") {
+      return res.status(403).json({ status: false, message: `Unauthorized. Super Admin only. (Current: ${req.user?.email})` });
+    }
+
     const user = await User.findById(id);
-    if (user?.email === "admin@gmail.com") {
+    if (user?.email?.toLowerCase() === "admin@gmail.com") {
       return res.status(403).json({ status: false, message: "Cannot delete Super Admin" });
     }
 

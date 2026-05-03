@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import ModalWrapper from "./ModalWrapper";
@@ -6,13 +6,13 @@ import { Dialog } from "@headlessui/react";
 import Textbox from "./Textbox";
 import Loading from "./Loader";
 import Button from "./Button";
+import API from "../assets/axios";
+import { toast } from "sonner";
 
-const AddUser = ({ open, setOpen, userData }) => {
+const AddUser = ({ open, setOpen, userData, refresh }) => {
   let defaultValues = userData ?? {};
   const { user } = useSelector((state) => state.auth);
-
-  const isLoading = false,
-    isUpdating = false;
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
@@ -20,7 +20,29 @@ const AddUser = ({ open, setOpen, userData }) => {
     formState: { errors },
   } = useForm({ defaultValues });
 
-  const handleOnSubmit = () => {};
+  const handleOnSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      if (userData) {
+        // Update User
+        await API.put("/user/profile", { ...data, _id: userData._id });
+        toast.success("User updated successfully");
+      } else {
+        // Add New User (Register)
+        // For new users, we might want to set a default password if not provided
+        // But since there's no password field, let's use a default one or handle it in backend
+        await API.post("/user/register", { ...data, password: "password123" });
+        toast.success("User added successfully");
+      }
+      setOpen(false);
+      refresh && refresh();
+    } catch (err) {
+      console.error("Operation failed", err);
+      toast.error(err?.response?.data?.message || "Operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -80,7 +102,7 @@ const AddUser = ({ open, setOpen, userData }) => {
             />
           </div>
 
-          {isLoading || isUpdating ? (
+          {isLoading ? (
             <div className='py-5'>
               <Loading />
             </div>

@@ -14,7 +14,7 @@ const protectRoute = async (req, res, next) => {
 
       req.user = {
         email: resp.email,
-        isAdmin: resp.isAdmin || resp.email === "admin@gmail.com",
+        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === "admin@gmail.com",
         role: resp.role,
         userId: decodedToken.userId,
       };
@@ -57,12 +57,12 @@ const allowRoles = (...roles) => {
 };
 
 const isSuperAdmin = (req, res, next) => {
-  if (req.user?.email === "admin@gmail.com") {
+  if (req.user?.email?.toLowerCase() === "admin@gmail.com") {
     return next();
   }
   return res.status(403).json({
     status: false,
-    message: "Access denied. Super Admin only.",
+    message: `Access denied. Super Admin only. (Current: ${req.user?.email})`,
   });
 };
 

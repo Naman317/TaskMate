@@ -3,6 +3,7 @@ import { UserPlus, Mail, Shield, MoreVertical, Edit, Trash2 } from "lucide-react
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import clsx from "clsx";
 
 import API from "../assets/axios";
 import { getInitials } from "../utils";
@@ -20,7 +21,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
 
   const currentUser = useSelector((state) => state.auth.user);
-  const isSuperAdmin = currentUser?.email === "admin@gmail.com";
+  const isSuperAdmin = currentUser?.email?.toLowerCase() === "admin@gmail.com";
 
   const fetchUsers = async () => {
     try {
@@ -45,14 +46,21 @@ const Users = () => {
       toast.success("Role updated successfully");
       fetchUsers();
     } catch (err) {
-      toast.error("Role update failed");
+      console.error("Role update failed", err);
+      toast.error(err?.response?.data?.message || "Role update failed");
     }
   };
 
   const deleteHandler = async () => {
-    // Implement delete user API if available
-    toast.info("Delete functionality coming soon");
-    setOpenDialog(false);
+    try {
+      await API.delete(`/user/${selected}`);
+      toast.success("User deleted successfully");
+      setOpenDialog(false);
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      toast.error(err?.response?.data?.message || "Failed to delete user");
+    }
   };
 
   const deleteClick = (id) => {

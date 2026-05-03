@@ -1,5 +1,5 @@
 import express from "express";
-import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
+import { isAdminRoute, isSuperAdmin, protectRoute } from "../middlewares/authMiddlewave.js";
 import {
   changeUserPassword,
   deleteUserProfile,
@@ -16,7 +16,7 @@ import {
 } from "../controllers/userController.js";
 
 const router = express.Router();
-router.put("/update-role/:id", protectRoute,updateUserRole);
+router.put("/update-role/:id", protectRoute, isSuperAdmin, updateUserRole);
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
@@ -34,6 +34,6 @@ router.put("/change-password", protectRoute, changeUserPassword);
 // //   FOR ADMIN ONLY - ADMIN ROUTES
 router
   .route("/:id")
-  .delete(protectRoute, isAdminRoute, deleteUserProfile);
+  .delete(protectRoute, isSuperAdmin, deleteUserProfile);
 
 export default router;
