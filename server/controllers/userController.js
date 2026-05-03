@@ -13,7 +13,7 @@ export const registerUser = async (req, res) => {
 
     const user = new User({ name, email, password, isAdmin, title, role });
     await user.save();
-    createJWT(res, user._id);
+    createJWT(req, res, user._id);
 
     user.password = undefined;
     res.status(201).json(user);
@@ -32,7 +32,7 @@ export const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
 
-    createJWT(res, user._id);
+    createJWT(req, res, user._id);
     user.password = undefined;
     res.status(200).json(user);
   } catch (error) {
