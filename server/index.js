@@ -24,13 +24,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-      
-      const isAllowed = allowedOrigins.includes(origin) || 
-                       origin.endsWith(".vercel.app") || 
-                       process.env.FRONTEND_URL === origin;
-                       
+
+      const isAllowed = allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        process.env.FRONTEND_URL === origin;
+
       if (isAllowed) {
         callback(null, true);
       } else {
