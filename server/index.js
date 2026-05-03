@@ -50,6 +50,7 @@ app.use(cookieParser());
 
 app.use(morgan("dev"));
 app.use("/api", routes);
+app.use("/", routes); // Fallback for production if /api is missing in frontend requests
 app.get("/", (req, res) => {
   res.send(" running ....");
 });
