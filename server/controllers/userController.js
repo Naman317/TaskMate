@@ -3,7 +3,6 @@ import Notice from "../models/notification.js";
 
 import User from "../models/user.js";
 import { createJWT } from "../utils/index.js";
-import { SUPER_ADMIN_EMAIL } from "../middlewares/authMiddlewave.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -168,7 +167,7 @@ export const updateUserRole = async (req, res) => {
     const user = req.user;
 
     // Only super admin can update roles
-    if (user.email?.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    if (user.email?.toLowerCase() !== "admin@gmail.com") {
       return res.status(403).json({ message: `Unauthorized. (Current: ${user?.email})` });
     }
 
@@ -179,7 +178,7 @@ export const updateUserRole = async (req, res) => {
 
     // Prevent changing super admin's role
     const targetUser = await User.findById(id);
-    if (targetUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+    if (targetUser?.email?.toLowerCase() === "admin@gmail.com") {
       return res.status(403).json({ message: "Cannot change Super Admin's role" });
     }
 
@@ -268,7 +267,7 @@ export const deleteUserProfile = async (req, res) => {
     }
 
     const user = await User.findById(id);
-    if (user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+    if (user?.email?.toLowerCase() === "admin@gmail.com") {
       return res.status(403).json({ status: false, message: "Cannot delete Super Admin" });
     }
 
