@@ -25,7 +25,7 @@ const Login = () => {
   } = useForm();
 
   const submitHandler = async (data) => {
-    const loginPromise = API.post("/user/login", data, {
+    const loginPromise = API.post("user/login", data, {
       withCredentials: true,
     });
 

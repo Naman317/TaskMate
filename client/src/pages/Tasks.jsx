@@ -328,6 +328,27 @@ const Tasks = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+          <Search size={32} />
+        </div>
+        <h3 className="text-xl font-bold">Failed to load tasks</h3>
+        <p className="text-muted-foreground mt-2 max-w-sm">
+          {error?.data?.message || "There was an error connecting to the server. Please check your connection."}
+        </p>
+        <Button
+          label="Try Again"
+          variant="outline"
+          className="mt-6"
+          onClick={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-6 animate-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -3,12 +3,12 @@ import { apiSlice } from "./apiSlice";
 export const userApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getTeam: builder.query({
-      query: () => "/user/get-team",
+      query: () => "user/get-team",
       providesTags: ["User"],
     }),
     updateUserRole: builder.mutation({
       query: ({ id, role }) => ({
-        url: `/user/update-role/${id}`,
+        url: `user/update-role/${id}`,
         method: "PUT",
         body: { role },
       }),
@@ -16,18 +16,18 @@ export const userApiSlice = apiSlice.injectEndpoints({
     }),
     deleteUser: builder.mutation({
       query: (id) => ({
-        url: `/user/${id}`,
+        url: `user/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["User"],
     }),
     getNotifications: builder.query({
-      query: () => "/user/notifications",
+      query: () => "user/notifications",
       providesTags: ["Notification"],
     }),
     markNotificationRead: builder.mutation({
       query: ({ id, isReadType }) => ({
-        url: "/user/read-notification",
+        url: "user/read-notification",
         method: "PUT",
         params: { id, isReadType },
       }),

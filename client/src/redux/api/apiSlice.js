@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const RAW_URI = import.meta.env.VITE_APP_BASE_URL || "http://localhost:8800/api";
-const API_URI = RAW_URI.endsWith("/api") ? RAW_URI : `${RAW_URI}/api`;
+const RAW_URI = import.meta.env.VITE_APP_BASE_URL || "http://localhost:5055";
+const API_URI = (RAW_URI.endsWith("/") ? RAW_URI : `${RAW_URI}/`) + (RAW_URI.includes("/api") ? "" : "api/");
 
 export const apiSlice = createApi({
   reducerPath: "api",

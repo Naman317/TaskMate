@@ -4,18 +4,18 @@ export const taskApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getTasks: builder.query({
       query: (params) => ({
-        url: "/task",
+        url: "task",
         params,
       }),
       providesTags: ["Task"],
     }),
     getTaskDetails: builder.query({
-      query: (id) => `/task/${id}`,
+      query: (id) => `task/${id}`,
       providesTags: (result, error, id) => [{ type: "Task", id }],
     }),
     createTask: builder.mutation({
       query: (data) => ({
-        url: "/task/create",
+        url: "task/create",
         method: "POST",
         body: data,
       }),
@@ -23,7 +23,7 @@ export const taskApiSlice = apiSlice.injectEndpoints({
     }),
     updateTask: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/task/update/${id}`,
+        url: `task/update/${id}`,
         method: "PUT",
         body: data,
       }),
@@ -48,14 +48,14 @@ export const taskApiSlice = apiSlice.injectEndpoints({
 
     trashTask: builder.mutation({
       query: (id) => ({
-        url: `/task/${id}`,
+        url: `task/${id}`,
         method: "PUT",
       }),
       invalidatesTags: ["Task"],
     }),
     deleteRestoreTask: builder.mutation({
       query: ({ id, actionType }) => ({
-        url: `/task/delete-restore/${id || ""}`,
+        url: `task/delete-restore/${id || ""}`,
         method: "DELETE",
         params: { actionType },
       }),
@@ -63,7 +63,7 @@ export const taskApiSlice = apiSlice.injectEndpoints({
     }),
     createSubTask: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/task/create-subtask/${id}`,
+        url: `task/create-subtask/${id}`,
         method: "PUT",
         body: data,
       }),
@@ -71,7 +71,7 @@ export const taskApiSlice = apiSlice.injectEndpoints({
     }),
     updateSubTaskStatus: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/task/update-subtask-status/${id}`,
+        url: `task/update-subtask-status/${id}`,
         method: "PUT",
         body: data,
       }),
@@ -79,14 +79,14 @@ export const taskApiSlice = apiSlice.injectEndpoints({
     }),
     postActivity: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/task/activity/${id}`,
+        url: `task/activity/${id}`,
         method: "POST",
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => [{ type: "Task", id }],
     }),
     getDashboardStats: builder.query({
-      query: () => "/task/dashboard",
+      query: () => "task/dashboard",
       providesTags: ["Task"],
     }),
   }),

@@ -23,7 +23,7 @@ const Register = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
-    const registerPromise = API.post("/user/register", {
+    const registerPromise = API.post("user/register", {
       ...data,
       isAdmin: false,
     });
