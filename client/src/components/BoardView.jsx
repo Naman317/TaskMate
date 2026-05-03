@@ -40,19 +40,21 @@ const BoardView = ({ tasks }) => {
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full min-h-[500px]">
         {COLUMNS.map((column) => (
-          <div key={column} className="flex flex-col gap-4">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  column === "todo" ? "bg-rose-500" : 
-                  column === "in progress" ? "bg-amber-500" : "bg-emerald-500"
-                }`} />
+          <div key={column} className="flex flex-col gap-3">
+            {/* Column Header */}
+            <div className="flex items-center gap-2 px-1">
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                column === "todo" ? "bg-rose-500" :
+                column === "in progress" ? "bg-amber-500" : "bg-emerald-500"
+              }`} />
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {column}
-                <span className="ml-2 px-2 py-0.5 text-[10px] bg-muted rounded-full text-foreground">
-                  {tasks.filter((t) => t.stage === column).length}
-                </span>
-              </h3>
+              </span>
+              <span className="ml-auto text-xs font-semibold px-2 py-0.5 bg-muted rounded-full">
+                {tasks.filter((t) => t.stage === column).length}
+              </span>
             </div>
+
 
             <Droppable droppableId={column}>
               {(provided, snapshot) => (

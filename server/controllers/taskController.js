@@ -45,16 +45,16 @@ export const createTask = async (req, res) => {
       stage: normalizedStage,
       date,
       priority: normalizedPriority,
-      activities: activity,
+      activities: [activity],
       createdBy: userId,
       createdByRole: isAdmin ? "admin" : "user",
     });
 
     await Notice.create({
-  team: team.map(id => new mongoose.Types.ObjectId(id)), // ✅ force to ObjectIds
-  text,
-  task: task._id,
-});
+      team: team.map(id => new mongoose.Types.ObjectId(id)), // ✅ force to ObjectIds
+      text,
+      task: task._id,
+    });
 
 
     res.status(200).json({ status: true, task, message: "Task created successfully." });
@@ -71,6 +71,9 @@ export const postTaskActivity = async (req, res) => {
     const { type, activity } = req.body;
 
     const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
 
     const data = {
       type,
@@ -97,22 +100,22 @@ export const dashboardStatistics = async (req, res) => {
 
     const allTasks = isAdmin
       ? await Task.find({
-          isTrashed: false,
+        isTrashed: false,
+      })
+        .populate({
+          path: "team",
+          select: "name role title email",
         })
-          .populate({
-            path: "team",
-            select: "name role title email",
-          })
-          .sort({ _id: -1 })
+        .sort({ _id: -1 })
       : await Task.find({
-          isTrashed: false,
-          team: { $all: [userId] },
+        isTrashed: false,
+        team: { $all: [userId] },
+      })
+        .populate({
+          path: "team",
+          select: "name role title email",
         })
-          .populate({
-            path: "team",
-            select: "name role title email",
-          })
-          .sort({ _id: -1 });
+        .sort({ _id: -1 });
 
     const users = await User.find({ isActive: true })
       .select("name title role isAdmin createdAt")
@@ -154,7 +157,7 @@ export const dashboardStatistics = async (req, res) => {
 
     // Calculate overdue tasks
     const today = new Date();
-    const overdueTasks = allTasks.filter(task => 
+    const overdueTasks = allTasks.filter(task =>
       new Date(task.date) < today && task.stage !== "completed"
     ).length;
 
@@ -182,17 +185,25 @@ export const dashboardStatistics = async (req, res) => {
 export const getTasks = async (req, res) => {
   try {
     const { stage, isTrashed } = req.query;
-    const { userId } = req.user;
+    const { userId, isAdmin } = req.user;
 
-    const query = {
-      isTrashed: isTrashed ? true : false,
-      $or: [
-        { team: userId },           // Tasks assigned to the user
-        { createdBy: userId },      // Tasks created by the user
-      ],
+    // Handle string or boolean values from various HTTP clients
+    const isTrashedFilter = isTrashed === "true" || isTrashed === true;
+
+    let query = {
+      isTrashed: isTrashedFilter,
     };
 
-    if (stage) query.stage = stage;
+    if (!isAdmin) {
+      query.$or = [
+        { team: userId },
+        { createdBy: userId },
+      ];
+    }
+
+    if (stage && stage.trim() !== "") {
+      query.stage = stage;
+    }
 
     const tasks = await Task.find(query)
       .populate({
@@ -236,9 +247,9 @@ export const getTask = async (req, res) => {
     const isOwner = task.createdBy?.toString() === userId;
 
     if (
-      task.createdByRole === "admin" || 
-      isTeamMember || 
-      isOwner || 
+      task.createdByRole === "admin" ||
+      isTeamMember ||
+      isOwner ||
       isAdmin
     ) {
       return res.status(200).json({ status: true, task });
@@ -326,7 +337,7 @@ export const updateSubTaskStatus = async (req, res) => {
     }
 
     subTask.isCompleted = isCompleted;
-    
+
     task.activities.push({
       type: "subtask",
       activity: `${isCompleted ? "Completed" : "Uncompleted"} subtask "${subTask.title}"`,
@@ -359,7 +370,6 @@ export const updateTask = async (req, res) => {
       });
     }
 
-    // Prevent regular users from editing admin-created tasks
     if (task.createdByRole === "admin" && !isAdmin) {
       return res.status(403).json({
         status: false,
@@ -401,37 +411,76 @@ export const trashTask = async (req, res) => {
     const { isAdmin, userId } = req.user;
 
     const task = await Task.findById(id);
-    if (!task) return res.status(404).json({ status: false, message: "Task not found." });
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
 
     if (task.createdByRole === "admin" && !isAdmin) {
       return res.status(403).json({
         status: false,
-        message: "You are not authorized to trash this admin-created task.",
+        message: "Not authorized to trash admin task.",
+      });
+    }
+
+    if (task.isTrashed) {
+      return res.status(400).json({
+        status: false,
+        message: "Task already in trash.",
       });
     }
 
     task.isTrashed = true;
+    task.trashedAt = new Date();
+
+    task.activities.push({
+      type: "update",
+      activity: "Task moved to trash",
+      by: userId,
+    });
+
     await task.save();
 
-    res.status(200).json({ status: true, message: "Task trashed successfully." });
+    return res.status(200).json({
+      status: true,
+      message: "Task trashed successfully.",
+    });
+
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
   }
 };
-
 export const deleteRestoreTask = async (req, res) => {
   try {
     const { id } = req.params;
     const { actionType } = req.query;
-    const { isAdmin } = req.user;
+    const { isAdmin, userId } = req.user;
+
+    const allowedActions = ["delete", "deleteAll", "restore", "restoreAll"];
+
+    if (!allowedActions.includes(actionType)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid action type",
+      });
+    }
 
     if (actionType === "delete") {
       const task = await Task.findById(id);
-      if (!task) return res.status(404).json({ status: false, message: "Task not found." });
-      if (task.createdByRole === "admin" && !isAdmin) {
-        return res.status(403).json({ status: false, message: "You are not authorized to delete this admin-created task." });
+      if (!task) {
+        return res.status(404).json({ status: false, message: "Task not found." });
       }
+
+      if (task.createdByRole === "admin" && !isAdmin) {
+        return res.status(403).json({
+          status: false,
+          message: "Not authorized to delete admin task.",
+        });
+      }
+
       await Task.findByIdAndDelete(id);
     }
 
@@ -439,27 +488,62 @@ export const deleteRestoreTask = async (req, res) => {
       if (!isAdmin) {
         return res.status(403).json({
           status: false,
-          message: "Only admins can delete all trashed tasks.",
+          message: "Only admins can delete all tasks.",
         });
       }
+
       await Task.deleteMany({ isTrashed: true });
     }
 
     else if (actionType === "restore") {
       const task = await Task.findById(id);
-      if (!task) return res.status(404).json({ status: false, message: "Task not found." });
+      if (!task) {
+        return res.status(404).json({ status: false, message: "Task not found." });
+      }
+
+      if (!task.isTrashed) {
+        return res.status(400).json({
+          status: false,
+          message: "Task is not in trash.",
+        });
+      }
 
       task.isTrashed = false;
+      task.trashedAt = null;
+
+      task.activities.push({
+        type: "update",
+        activity: "Task restored",
+        by: userId,
+      });
+
       await task.save();
     }
 
     else if (actionType === "restoreAll") {
-      await Task.updateMany({ isTrashed: true }, { $set: { isTrashed: false } });
+      if (!isAdmin) {
+        return res.status(403).json({
+          status: false,
+          message: "Only admins can restore all tasks.",
+        });
+      }
+
+      await Task.updateMany(
+        { isTrashed: true },
+        { $set: { isTrashed: false, trashedAt: null } }
+      );
     }
 
-    res.status(200).json({ status: true, message: `Operation '${actionType}' performed successfully.` });
+    return res.status(200).json({
+      status: true,
+      message: `Action '${actionType}' completed.`,
+    });
+
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
   }
 };

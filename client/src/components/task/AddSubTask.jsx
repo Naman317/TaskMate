@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import ModalWrapper from "../ModalWrapper";
 import { Dialog } from "@headlessui/react";
 import Textbox from "../Textbox";
 import Button from "../Button";
-import API from "../../assets/axios";
+import { useCreateSubTaskMutation } from "../../redux/api/taskApiSlice";
 import { toast } from "sonner";
 
 const AddSubTask = ({ open, setOpen, id, refresh }) => {
@@ -15,25 +15,23 @@ const AddSubTask = ({ open, setOpen, id, refresh }) => {
     reset,
   } = useForm();
 
-  const [loading, setLoading] = useState(false);
+  const [createSubTask, { isLoading }] = useCreateSubTaskMutation();
 
   const onSubmit = async (data) => {
     try {
-      setLoading(true);
-      await API.put(`/task/create-subtask/${id}`, data);
+      await createSubTask({ id, data }).unwrap();
       toast.success("Subtask added successfully");
       reset();
       setOpen(false);
       if (refresh) refresh();
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to add subtask");
-    } finally {
-      setLoading(false);
+      toast.error(err?.data?.message || err?.message || "Failed to add subtask");
     }
   };
 
   return (
+
     <ModalWrapper open={open} setOpen={setOpen}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Dialog.Title className="text-xl font-bold text-gray-900">
@@ -78,9 +76,10 @@ const AddSubTask = ({ open, setOpen, id, refresh }) => {
             type="submit"
             className="bg-primary text-white"
             label="Add Subtask"
-            isLoading={loading}
+            isLoading={isLoading}
           />
           <Button
+
             type="button"
             className="bg-white text-gray-900 border"
             onClick={() => setOpen(false)}

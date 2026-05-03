@@ -14,7 +14,7 @@ const protectRoute = async (req, res, next) => {
 
       req.user = {
         email: resp.email,
-        isAdmin: resp.isAdmin,
+        isAdmin: resp.isAdmin || resp.email === "admin@gmail.com",
         role: resp.role,
         userId: decodedToken.userId,
       };

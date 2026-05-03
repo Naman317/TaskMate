@@ -13,7 +13,8 @@ import BoardView from "../components/BoardView";
 import Table from "../components/task/Table";
 import AddTask from "../components/task/AddTask";
 import useToast from "../hooks/useToast";
-import { useGetTasksQuery, useDeleteRestoreTaskMutation, useUpdateTaskMutation } from "../redux/api/taskApiSlice";
+import { toast } from "sonner";
+import { useGetTasksQuery, useDeleteRestoreTaskMutation, useUpdateTaskMutation, useTrashTaskMutation } from "../redux/api/taskApiSlice";
 import { useSelector } from "react-redux";
 
 
@@ -41,6 +42,7 @@ const Tasks = () => {
 
   const [deleteRestoreTask] = useDeleteRestoreTaskMutation();
   const [updateTask] = useUpdateTaskMutation();
+  const [trashTask] = useTrashTaskMutation();
 
   const handleDelete = async (taskId) => {
     try {
@@ -204,19 +206,80 @@ const Tasks = () => {
       const taskToDelete = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
       
       if (taskToDelete) {
-        if (taskToDelete.createdByRole === "admin" && user?.role !== "admin") {
-          toast.error("You are not authorized to delete this admin-created task.");
+        if (taskToDelete.createdByRole === "admin" && !user?.isAdmin) {
+          toast.error("You are not authorized to trash this admin-created task.");
           return;
         }
-        handleDelete(taskToDelete._id);
+        try {
+          await trashTask(taskToDelete._id).unwrap();
+          toast.success(`"${taskToDelete.title}" moved to trash.`);
+        } catch (err) {
+          toast.error(err?.data?.message || "Failed to trash task.");
+        }
       } else {
-        toast.error(`Could not find task "${titleToFind}" to delete.`);
+        toast.error(`Could not find task "${titleToFind}".`);
       }
       return;
     }
+
     
+    // ── Bulk: Delete All Tasks ──────────────────────────────────────────
+    if (
+      lowerCommand.includes("delete all tasks") ||
+      lowerCommand.includes("delete all")
+    ) {
+      const tasks = data?.tasks || [];
+      if (!tasks.length) { toast.error("No tasks to delete."); return; }
+
+      if (!user?.isAdmin) {
+        toast.error("Only admins can delete all tasks.");
+        return;
+      }
+
+      toast.promise(
+        Promise.all(tasks.map((t) => trashTask(t._id).unwrap())),
+        {
+          loading: `Moving ${tasks.length} task(s) to trash…`,
+          success: `Moved ${tasks.length} task(s) to trash.`,
+          error: "Some tasks could not be trashed.",
+        }
+      );
+      return;
+    }
+
+    // ── Bulk: Mark All as Completed ─────────────────────────────────────
+    if (
+      lowerCommand.includes("mark all as completed") ||
+      lowerCommand.includes("complete all tasks") ||
+      lowerCommand.includes("mark all tasks as completed") ||
+      lowerCommand.includes("complete all")
+    ) {
+      const pending = data?.tasks?.filter((t) => t.stage !== "completed") || [];
+      if (!pending.length) { toast.success("All tasks are already completed!"); return; }
+
+      toast.promise(
+        Promise.all(
+          pending.map((t) =>
+            updateTask({
+              id: t._id,
+              data: { ...t, stage: "completed", team: t.team?.map((m) => m._id || m) },
+            }).unwrap()
+          )
+        ),
+        {
+          loading: `Completing ${pending.length} task(s)…`,
+          success: `Marked ${pending.length} task(s) as completed.`,
+          error: "Some tasks could not be updated.",
+        }
+      );
+      return;
+    }
+
+
+
     toast.error("Command not recognized.");
   };
+
 
   const startVoiceRecognition = () => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -225,7 +288,12 @@ const Tasks = () => {
     }
     const recognition = new window.webkitSpeechRecognition();
     recognition.onstart = () => setListening(true);
-    recognition.onresult = (e) => handleVoiceCommand(e.results[0][0].transcript);
+    recognition.onresult = (e) => {
+      const raw = e.results[0][0].transcript;
+      // Strip trailing/leading punctuation added by the Speech API
+      const clean = raw.replace(/[.,!?;:]+$/g, "").trim();
+      handleVoiceCommand(clean);
+    };
     recognition.onend = () => setListening(false);
     recognition.start();
   };

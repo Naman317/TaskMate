@@ -56,10 +56,17 @@ const taskSchema = new Schema(
     ],
     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
     isTrashed: { type: Boolean, default: false },
+    trashedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
-
+taskSchema.index(
+  { trashedAt: 1 },
+  { expireAfterSeconds: 30 * 24 * 60 * 60 } // 30 days
+);
 const Task = mongoose.model("Task", taskSchema);
 
 export default Task;

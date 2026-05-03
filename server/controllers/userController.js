@@ -5,44 +5,44 @@ import User from "../models/user.js";
 import { createJWT } from "../utils/index.js";
 
 export const registerUser = async (req, res) => {
-  try {
-    const { name, email, password, isAdmin, title, role } = req.body;
-    const userExist = await User.findOne({ email });
-    if (userExist)
-      return res.status(400).json({ status: false, message: "User already exists" });
+  try {
+    const { name, email, password, isAdmin, title, role } = req.body;
+    const userExist = await User.findOne({ email });
+    if (userExist)
+      return res.status(400).json({ status: false, message: "User already exists" });
 
-    const user = new User({ name, email, password, isAdmin, title, role });
-    await user.save();
-    createJWT(res, user._id);
+    const user = new User({ name, email, password, isAdmin, title, role });
+    await user.save();
+    createJWT(res, user._id);
 
-    user.password = undefined;
-    res.status(201).json(user);
-  } catch (error) {
-    res.status(400).json({ status: false, message: error.message });
-  }
+    user.password = undefined;
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
 };
 
 export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ status: false, message: "Invalid email." });
-   
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ status: false, message: "Invalid email." });
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
 
-    createJWT(res, user._id);
-    user.password = undefined;
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(400).json({ status: false, message: error.message });
-  }
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
+
+    createJWT(res, user._id);
+    user.password = undefined;
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(400).json({ status: false, message: error.message });
+  }
 };
 
 export const logoutUser = async (req, res) => {
-  res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
-  res.status(200).json({ message: "Logout successful" });
+  res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+  res.status(200).json({ message: "Logout successful" });
 };
 
 export const getTeamList = async (req, res) => {
@@ -129,8 +129,8 @@ export const updateUserProfile = async (req, res) => {
       isAdmin && userId === _id
         ? userId
         : isAdmin && userId !== _id
-        ? _id
-        : userId;
+          ? _id
+          : userId;
 
     const user = await User.findById(id);
 
@@ -180,7 +180,7 @@ export const updateUserRole = async (req, res) => {
       id,
       { role, isAdmin },
       { new: true }
-    ).select("-password"); // remove password in response for safety
+    ).select("-password");
 
     if (!updated) {
       return res.status(404).json({ message: "User not found" });
@@ -251,7 +251,7 @@ export const changeUserPassword = async (req, res) => {
 export const deleteUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await User.findById(id);
     if (user?.email === "admin@gmail.com") {
       return res.status(403).json({ status: false, message: "Cannot delete Super Admin" });
