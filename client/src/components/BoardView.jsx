@@ -1,5 +1,6 @@
 import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useSelector } from "react-redux";
 import TaskCard from "./TaskCard";
 import { useUpdateTaskMutation } from "../redux/api/taskApiSlice";
 import { toast } from "sonner";
@@ -7,6 +8,8 @@ import { toast } from "sonner";
 const COLUMNS = ["todo", "in progress", "completed"];
 
 const BoardView = ({ tasks }) => {
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin";
   const [updateTask] = useUpdateTaskMutation();
 
   const onDragEnd = async (result) => {
@@ -68,7 +71,12 @@ const BoardView = ({ tasks }) => {
                   {tasks
                     .filter((task) => task.stage?.toLowerCase() === column.toLowerCase())
                     .map((task, index) => (
-                      <Draggable key={task._id} draggableId={task._id} index={index}>
+                      <Draggable 
+                        key={task._id} 
+                        draggableId={task._id} 
+                        index={index}
+                        isDragDisabled={!isAdmin}
+                      >
                         {(provided, snapshot) => (
                           <div
                             ref={provided.innerRef}

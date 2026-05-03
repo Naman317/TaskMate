@@ -97,6 +97,7 @@ const Tasks = () => {
 
     // Stage Movement
     if (lowerCommand.startsWith("move ") && lowerCommand.includes(" to ")) {
+      if (!user?.isAdmin) { toast.error("Only admins can move tasks"); return; }
       const match = lowerCommand.match(/^move\s+(.+)\s+to\s+(.+)$/);
       if (match) {
         const titleToFind = match[1].trim();
@@ -128,6 +129,7 @@ const Tasks = () => {
     }
 
     if (lowerCommand.startsWith("mark ") && lowerCommand.includes(" as completed")) {
+      if (!user?.isAdmin) { toast.error("Only admins can complete tasks"); return; }
       const titleToFind = lowerCommand.replace("mark ", "").replace(" as completed", "").trim();
       const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
       if (taskToMove) {
@@ -147,6 +149,7 @@ const Tasks = () => {
     }
 
     if (lowerCommand.startsWith("create task ") || lowerCommand.startsWith("add task ")) {
+      if (!user?.isAdmin) { toast.error("Only admins can create tasks"); return; }
       const title = command.replace(/create task |add task /i, "").trim();
       setPrefillData({ title, priority: "normal" });
       setSelectedTask(null);
@@ -155,6 +158,7 @@ const Tasks = () => {
     }
 
     if (lowerCommand === "create task" || lowerCommand === "add task") {
+      if (!user?.isAdmin) { toast.error("Only admins can create tasks"); return; }
       setPrefillData(null);
       setSelectedTask(null);
       setOpen(true);
@@ -162,6 +166,7 @@ const Tasks = () => {
     }
 
     if (lowerCommand.startsWith("edit task ")) {
+      if (!user?.isAdmin) { toast.error("Only admins can edit tasks"); return; }
       const titleToFind = lowerCommand.replace("edit task ", "").trim();
       const taskToEdit = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
       if (taskToEdit) {
@@ -374,15 +379,17 @@ const Tasks = () => {
             className="hidden lg:flex"
           />
 
-          <Button
-            label="Create Task"
-            icon={<Plus size={18} />}
-            onClick={() => {
-              setSelectedTask(null);
-              setPrefillData(null);
-              setOpen(true);
-            }}
-          />
+          {user?.role === "admin" && (
+            <Button
+              label="Create Task"
+              icon={<Plus size={18} />}
+              onClick={() => {
+                setSelectedTask(null);
+                setPrefillData(null);
+                setOpen(true);
+              }}
+            />
+          )}
 
         </div>
       </div>
