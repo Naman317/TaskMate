@@ -5,6 +5,8 @@ import express from "express";
 import morgan from "morgan";
 import { errorHandler, routeNotFound } from "./middlewares/errorMiddlewaves.js";
 import routes from "./routes/index.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { dbConnection } from "./utils/index.js";
 
 dotenv.config();
@@ -50,9 +52,12 @@ app.use(cookieParser());
 
 app.use(morgan("dev"));
 app.use("/api", routes);
-app.use("/", routes); // Fallback for production if /api is missing in frontend requests
+app.use("/api/task", taskRoutes); // Direct mount for safety
+app.use("/api/user", userRoutes); // Direct mount for safety
+app.use("/", routes); 
+
 app.get("/", (req, res) => {
-  res.send(" running ....");
+  res.send("Server is running correctly...");
 });
 app.use(routeNotFound);
 app.use(errorHandler);

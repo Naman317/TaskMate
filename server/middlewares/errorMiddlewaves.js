@@ -1,4 +1,5 @@
 const routeNotFound = (req, res, next) => {
+  console.log(`[404] ${req.method} ${req.originalUrl}`);
   const error = new Error(`Route not found: ${req.originalUrl}`);
   res.status(404);
   next(error);
