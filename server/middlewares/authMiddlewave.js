@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com";
+
 const protectRoute = async (req, res, next) => {
   try {
     let token = req.cookies?.token;
@@ -12,9 +14,10 @@ const protectRoute = async (req, res, next) => {
         "isAdmin email role"
       );
 
+      const userEmail = resp.email?.toLowerCase();
       req.user = {
         email: resp.email,
-        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === "admin@gmail.com",
+        isAdmin: resp.isAdmin || userEmail === SUPER_ADMIN_EMAIL.toLowerCase(),
         role: resp.role,
         userId: decodedToken.userId,
       };
@@ -57,7 +60,7 @@ const allowRoles = (...roles) => {
 };
 
 const isSuperAdmin = (req, res, next) => {
-  if (req.user?.email?.toLowerCase() === "admin@gmail.com") {
+  if (req.user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
     return next();
   }
   return res.status(403).json({
@@ -67,4 +70,4 @@ const isSuperAdmin = (req, res, next) => {
 };
 
 
-export { isAdminRoute, protectRoute,isSuperAdmin,allowRoles };
+export { isAdminRoute, protectRoute, isSuperAdmin, allowRoles, SUPER_ADMIN_EMAIL };
