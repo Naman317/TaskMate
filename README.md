@@ -10,7 +10,7 @@ Tasky is a professional, task management platform built with the MERN stack. Des
 
 ### Advanced Role-Based Access Control (RBAC)
 Tasky implements a strict 3-tier hierarchy to ensure organizational security:
-*   **Super Admin (`admin@gmail.com`)**: Full system control. Can promote/demote other users and retains ultimate authority over team management.
+*   **Super Admin (`admin@gmail.com ||pass: admin@gmail.com`)**: Full system control. Can promote/demote other users and retains ultimate authority over team management.
 *   **Administrator**: Can create, manage, and assign tasks across the team. Cannot modify the roles of other administrators.
 *   **Team Member**: Focused, distraction-free environment. Can only view and update tasks specifically assigned to them.
 
