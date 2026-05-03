@@ -27,7 +27,7 @@ app.use(
       if (!origin) return callback(null, true);
 
       const isAllowed = allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
+        origin?.endsWith?.(".vercel.app") ||
         process.env.FRONTEND_URL === origin;
 
       if (isAllowed) {
