@@ -17,7 +17,7 @@ import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
 const router = express.Router();
 
 // Task Creation 
-router.post("/create", protectRoute, createTask);
+router.post("/create", protectRoute, isAdminRoute, createTask);
 
 // Activities & Subtasks
 router.post("/activity/:id", protectRoute, postTaskActivity);
@@ -35,12 +35,13 @@ router.get("/:id", protectRoute, getTask);
 
 // Task Update & Trash
 
-router.put("/update/:id", protectRoute, updateTask);                 // Edit
-router.put("/:id", protectRoute, trashTask);                         // Soft delete (move to trash)
+router.put("/update/:id", protectRoute, isAdminRoute, updateTask);                 // Edit
+router.put("/:id", protectRoute, isAdminRoute, trashTask);                         // Soft delete (move to trash)
 
 router.delete(
   "/delete-restore/:id?",
   protectRoute,
+  isAdminRoute,
   deleteRestoreTask
 );
 

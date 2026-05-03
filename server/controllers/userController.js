@@ -47,7 +47,7 @@ export const logoutUser = async (req, res) => {
 
 export const getTeamList = async (req, res) => {
   try {
-    const users = await User.find({ email: { $ne: "admin@gmail.com" } }).select("_id name email role");
+    const users = await User.find().select("_id name email role title isAdmin isActive");
 
 
     return res.status(200).json(users);

@@ -98,14 +98,16 @@ const Users = () => {
           <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
           <p className="text-muted-foreground">Manage your team and their access levels.</p>
         </div>
-        <Button
-          label="Add New User"
-          icon={<UserPlus size={18} />}
-          onClick={() => {
-            setSelected(null);
-            setOpen(true);
-          }}
-        />
+        {isSuperAdmin && (
+          <Button
+            label="Add New User"
+            icon={<UserPlus size={18} />}
+            onClick={() => {
+              setSelected(null);
+              setOpen(true);
+            }}
+          />
+        )}
       </div>
 
       <Card className="overflow-hidden border-border/50 shadow-premium">
@@ -154,12 +156,12 @@ const Users = () => {
                           <div className="relative inline-flex items-center gap-2">
                             <Shield size={14} className="text-indigo-600" />
                             <select
-                              value={user.email === "admin@gmail.com" ? "superadmin" : user.role}
+                              value={user.email?.toLowerCase() === "admin@gmail.com" ? "superadmin" : user.role}
                               onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                              disabled={user.email === "admin@gmail.com"}
+                              disabled={user.email?.toLowerCase() === "admin@gmail.com"}
                               className="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none disabled:cursor-not-allowed disabled:text-indigo-600 uppercase"
                             >
-                              {user.email === "admin@gmail.com" ? (
+                              {user.email?.toLowerCase() === "admin@gmail.com" ? (
                                 <option value="superadmin">Super Admin</option>
                               ) : (
                                 <>
@@ -172,11 +174,11 @@ const Users = () => {
                         ) : (
                           <span className={clsx(
                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border",
-                            user.email === "admin@gmail.com" ? "bg-indigo-100 text-indigo-700 border-indigo-200" :
+                            user.email?.toLowerCase() === "admin@gmail.com" ? "bg-indigo-100 text-indigo-700 border-indigo-200" :
                             user.role === "admin" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-blue-100 text-blue-700 border-blue-200"
                           )}>
                             <Shield size={10} />
-                            {user.email === "admin@gmail.com" ? "Super Admin" : user.role}
+                            {user.email?.toLowerCase() === "admin@gmail.com" ? "Super Admin" : user.role}
                           </span>
                         )}
                       </td>
@@ -198,8 +200,8 @@ const Users = () => {
                               className="text-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-30"
                               icon={<Trash2 size={16} />}
                               onClick={() => deleteClick(user._id)}
-                              title={user.email === "admin@gmail.com" ? "Cannot delete Super Admin" : "Delete User"}
-                              disabled={user.email === "admin@gmail.com"}
+                              title={user.email?.toLowerCase() === "admin@gmail.com" ? "Cannot delete Super Admin" : "Delete User"}
+                              disabled={user.email?.toLowerCase() === "admin@gmail.com"}
                             />
                           </div>
                         </td>
