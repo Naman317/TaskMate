@@ -37,16 +37,7 @@ const Navbar = () => {
           <Menu size={20} />
         </button>
 
-        <div className="relative hidden md:block group">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-            <Search size={16} />
-          </div>
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            className="h-9 w-64 rounded-full border border-input bg-muted/50 pl-10 pr-4 text-sm transition-all focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none"
-          />
-        </div>
+
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">

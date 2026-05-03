@@ -25,24 +25,27 @@ import Skeleton from "../components/ui/Skeleton";
 import Chart from "../components/Chart";
 import useToast from "../hooks/useToast";
 
+import AddTask from "../components/task/AddTask";
+
 const Dashboard = () => {
   const toast = useToast();
   const [summary, setSummary] = useState(null);
-
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await API.get("task/dashboard", { withCredentials: true });
-        setSummary(res.data);
-      } catch (err) {
-        console.error("Dashboard fetch failed:", err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("task/dashboard", { withCredentials: true });
+      setSummary(res.data);
+    } catch (err) {
+      console.error("Dashboard fetch failed:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDashboard();
   }, []);
 
@@ -140,7 +143,7 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's what's happening with your tasks.</p>
         </div>
-        <Button label="New Task" icon={<Plus size={18} />} />
+        <Button label="New Task" icon={<Plus size={18} />} onClick={() => setOpen(true)} />
       </div>
 
       {/* Stats Grid */}
@@ -277,9 +280,20 @@ const Dashboard = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+            <AddTask
+        open={open}
+        setOpen={setOpen}
+        refresh={fetchDashboard}
+      />
+    </div>
         </CardContent>
       </Card>
+
+      <AddTask
+        open={open}
+        setOpen={setOpen}
+        refresh={fetchDashboard}
+      />
     </div>
   );
 };
