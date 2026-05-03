@@ -22,14 +22,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import useToast from "../../hooks/useToast";
 
 const linkData = [
-  { label: "Dashboard", link: "dashboard", icon: <LayoutDashboard size={20} /> },
-  { label: "Tasks", link: "tasks", icon: <ListTodo size={20} /> },
-  { label: "Completed", link: "completed/completed", icon: <CheckCircle2 size={20} /> },
-  { label: "In Progress", link: "in-progress/in progress", icon: <Clock size={20} /> },
-  { label: "To Do", link: "todo/todo", icon: <ListTodo size={20} /> },
-  { label: "Overdue", link: "overdue/overdue", icon: <AlertCircle size={20} /> },
-  { label: "Team", link: "team", icon: <Users size={20} /> },
-  { label: "Trash", link: "trashed", icon: <Trash2 size={20} /> },
+  { label: "Dashboard", link: "/dashboard", icon: <LayoutDashboard size={20} /> },
+  { label: "Tasks", link: "/tasks", icon: <ListTodo size={20} /> },
+  { label: "Completed", link: "/tasks/completed", icon: <CheckCircle2 size={20} /> },
+  { label: "In Progress", link: "/tasks/in progress", icon: <Clock size={20} /> },
+  { label: "To Do", link: "/tasks/todo", icon: <ListTodo size={20} /> },
+  { label: "Overdue", link: "/tasks/overdue", icon: <AlertCircle size={20} /> },
+  { label: "Team", link: "/team", icon: <Users size={20} /> },
+  { label: "Trash", link: "/trashed", icon: <Trash2 size={20} /> },
 ];
 
 const Sidebar = () => {

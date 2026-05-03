@@ -51,7 +51,7 @@ const BoardView = ({ tasks }) => {
                 {column}
               </span>
               <span className="ml-auto text-xs font-semibold px-2 py-0.5 bg-muted rounded-full">
-                {tasks.filter((t) => t.stage === column).length}
+                {tasks.filter((t) => t.stage?.toLowerCase() === column.toLowerCase()).length}
               </span>
             </div>
 
@@ -66,7 +66,7 @@ const BoardView = ({ tasks }) => {
                   }`}
                 >
                   {tasks
-                    .filter((task) => task.stage === column)
+                    .filter((task) => task.stage?.toLowerCase() === column.toLowerCase())
                     .map((task, index) => (
                       <Draggable key={task._id} draggableId={task._id} index={index}>
                         {(provided, snapshot) => (

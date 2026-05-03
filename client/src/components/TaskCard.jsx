@@ -139,8 +139,8 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className={clsx("w-2 h-2 rounded-full mt-2 shrink-0", 
-                task.stage === "todo" ? "bg-rose-500" : 
-                task.stage === "in progress" ? "bg-amber-500" : "bg-emerald-500"
+                task.stage?.toLowerCase() === "todo" ? "bg-rose-500" : 
+                task.stage?.toLowerCase() === "in progress" ? "bg-amber-500" : "bg-emerald-500"
               )} />
               <h4 className="font-bold text-foreground leading-tight group-hover:text-primary transition-colors cursor-pointer" onClick={handleView}>
                 {task?.title}
