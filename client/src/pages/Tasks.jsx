@@ -53,30 +53,7 @@ const Tasks = () => {
     }
   };
 
-  const exportToCSV = () => {
-    if (!data?.tasks?.length) return toast.error("No tasks to export");
-    const headers = ["Title", "Stage", "Priority", "Due Date", "Created At"];
-    const csvContent = [
-      headers.join(","),
-      ...data.tasks.map(t => [
-        `"${t.title.replace(/"/g, '""')}"`,
-        t.stage,
-        t.priority,
-        new Date(t.date).toLocaleDateString(),
-        new Date(t.createdAt).toLocaleDateString()
-      ].join(","))
-    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `tasks_export_${new Date().getTime()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Tasks exported successfully!");
-  };
 
   const handleVoiceCommand = async (command) => {
     const lowerCommand = command.toLowerCase().trim();
@@ -116,11 +93,7 @@ const Tasks = () => {
       return;
     }
 
-    // Export Data
-    if (lowerCommand.includes("export tasks") || lowerCommand.includes("download csv") || lowerCommand.includes("export to csv")) {
-      exportToCSV();
-      return;
-    }
+
 
     // Stage Movement
     if (lowerCommand.startsWith("move ") && lowerCommand.includes(" to ")) {
@@ -392,13 +365,7 @@ const Tasks = () => {
             </button>
           </div>
 
-          <Button
-            variant="outline"
-            icon={<Download size={18} />}
-            onClick={exportToCSV}
-            className="hidden md:flex"
-            label="Export"
-          />
+
 
           <Button
             variant={listening ? "secondary" : "outline"}
