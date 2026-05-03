@@ -11,7 +11,11 @@ const COLUMNS = ["todo", "in progress", "completed"];
 const BoardView = ({ tasks }) => {
   const [updateTask] = useUpdateTaskMutation();
   const { user } = useSelector((state) => state.auth);
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase() === "admin@gmail.com";
+  
+  // Robust Admin check: handle casing and Super Admin email
+  const isAdmin = 
+    user?.role?.toLowerCase() === "admin" || 
+    user?.email?.toLowerCase() === "admin@gmail.com";
 
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
@@ -19,7 +23,11 @@ const BoardView = ({ tasks }) => {
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // SDE 2 move: Optimistic UI or handle status update
+    if (!isAdmin) {
+      toast.error("You don't have permission to change task stages.");
+      return;
+    }
+
     try {
       const task = tasks.find((t) => t._id === draggableId);
       if (!task) return;

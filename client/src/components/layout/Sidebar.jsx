@@ -45,10 +45,8 @@ const Sidebar = () => {
   // Base links: 0-5 (Dashboard -> Overdue)
   let sidebarLinks = linkData.slice(0, 6);
   
-  if (isSuperAdmin) {
-    sidebarLinks = linkData; // Super admin sees all, including Team
-  } else if (user?.isAdmin) {
-    sidebarLinks = [...sidebarLinks, linkData[7]]; // Admin sees Trash, but not Team
+  if (isSuperAdmin || user?.isAdmin) {
+    sidebarLinks = linkData; // Admins and Super Admins see all
   }
 
 
