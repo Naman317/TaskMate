@@ -105,37 +105,32 @@ const TaskCard = ({ task, onSubTaskAdded }) => {
                       </button>
                     )}
                   </Menu.Item>
-
-                  {user?.isAdmin && (
-                    <>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleEdit}
-                            className={clsx(
-                              "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md",
-                              active ? "bg-accent" : ""
-                            )}
-                          >
-                            <Edit size={14} /> Edit
-                          </button>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleEdit}
+                        className={clsx(
+                          "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md",
+                          active ? "bg-accent" : ""
                         )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleDeleteClick}
-                            className={clsx(
-                              "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md text-red-500",
-                              active ? "bg-red-500/10" : ""
-                            )}
-                          >
-                            <Trash2 size={14} /> Delete
-                          </button>
+                      >
+                        <Edit size={14} /> Edit
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={handleDeleteClick}
+                        className={clsx(
+                          "flex w-full items-center gap-2 px-3 py-1.5 text-xs rounded-md text-red-500",
+                          active ? "bg-red-500/10" : ""
                         )}
-                      </Menu.Item>
-                    </>
-                  )}
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    )}
+                  </Menu.Item>
                 </Menu.Items>
               </Transition>
             </Menu>

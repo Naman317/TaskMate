@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate } from "../../utils";
 import clsx from "clsx";
 import { FaList } from "react-icons/fa";
-import { useSelector } from "react-redux";
 import UserInfo from "../UserInfo";
 import Button from "../Button";
 import ConfirmatioDialog from "../Dialogs";
@@ -22,7 +21,6 @@ const ICONS = {
 };
 
 const Table = ({ tasks }) => {
-  const { user } = useSelector((state) => state.auth);
   const [openDialog, setOpenDialog] = useState(false);
   const [selected, setSelected] = useState(null);
 
@@ -105,22 +103,18 @@ const Table = ({ tasks }) => {
       </td>
 
       <td className='py-2 flex gap-2 md:gap-4 justify-end'>
-        {user?.role === "admin" && (
-          <>
-            <Button
-              className='text-blue-600 hover:text-blue-500 sm:px-0 text-sm md:text-base'
-              label='Edit'
-              type='button'
-            />
+        <Button
+          className='text-blue-600 hover:text-blue-500 sm:px-0 text-sm md:text-base'
+          label='Edit'
+          type='button'
+        />
 
-            <Button
-              className='text-red-700 hover:text-red-500 sm:px-0 text-sm md:text-base'
-              label='Delete'
-              type='button'
-              onClick={() => deleteClicks(task._id)}
-            />
-          </>
-        )}
+        <Button
+          className='text-red-700 hover:text-red-500 sm:px-0 text-sm md:text-base'
+          label='Delete'
+          type='button'
+          onClick={() => deleteClicks(task._id)}
+        />
       </td>
     </tr>
   );

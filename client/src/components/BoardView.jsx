@@ -1,16 +1,16 @@
 import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useSelector } from "react-redux";
 import TaskCard from "./TaskCard";
 import { useUpdateTaskMutation } from "../redux/api/taskApiSlice";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
 
 const COLUMNS = ["todo", "in progress", "completed"];
 
 const BoardView = ({ tasks }) => {
-  const { user } = useSelector((state) => state.auth);
-  const isAdmin = user?.role === "admin";
   const [updateTask] = useUpdateTaskMutation();
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase() === "admin@gmail.com";
 
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
@@ -82,7 +82,10 @@ const BoardView = ({ tasks }) => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`${snapshot.isDragging ? "shadow-2xl z-50 scale-105" : ""}`}
+                            className={clsx(
+                              snapshot.isDragging ? "shadow-2xl z-50 scale-105" : "",
+                              !isAdmin ? "cursor-default" : "cursor-grab"
+                            )}
                           >
                             <TaskCard task={task} />
                           </div>

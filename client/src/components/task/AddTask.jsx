@@ -21,7 +21,7 @@ const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
 
   const isAdminTask = isEditMode && task?.createdByRole === "admin";
   const isUserNotAllowed = isAdminTask && user?.role !== "admin";
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase() === "admin@gmail.com";
 
   const {
     register,
