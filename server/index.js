@@ -53,8 +53,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use("/api", routes);
-app.use("/api/task", taskRoutes);
-app.use("/api/user", userRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Server is running correctly...");
