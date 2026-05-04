@@ -25,6 +25,7 @@ app.use(
       const allowedOrigins = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://monumental-praline-b65f51.netlify.app",
         process.env.FRONTEND_URL,
       ];
 
