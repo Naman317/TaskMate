@@ -39,7 +39,7 @@ const protectRoute = async (req, res, next) => {
 
       req.user = {
         email: resp.email,
-        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase(),
+        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === "admin@gmail.com",
         role: resp.role,
         userId: decodedToken.userId,
       };
@@ -72,8 +72,7 @@ const isAdminRoute = (req, res, next) => {
 const allowRoles = (...roles) => {
   return (req, res, next) => {
     // Super admin (identified by email) bypasses role checks
-    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
-    const isSuper = req.user?.email?.toLowerCase() === superAdminEmail;
+    const isSuper = req.user?.email?.toLowerCase() === "admin@gmail.com";
 
     if (req.user && (isSuper || roles.includes(req.user.role))) {
       return next();

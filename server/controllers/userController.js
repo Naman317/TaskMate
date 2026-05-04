@@ -17,8 +17,7 @@ export const registerUser = async (req, res) => {
     user.password = undefined;
 
     // Apply Super Admin override for the response object
-    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
-    if (user.email.toLowerCase() === superAdminEmail) {
+    if (user.email.toLowerCase() === "admin@gmail.com") {
       user.isAdmin = true;
       user.role = "admin";
     }
@@ -44,8 +43,7 @@ export const loginUser = async (req, res) => {
     user.password = undefined;
 
     // Apply Super Admin override for the response object
-    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
-    if (user.email.toLowerCase() === superAdminEmail) {
+    if (user.email.toLowerCase() === "admin@gmail.com") {
       user.isAdmin = true;
       user.role = "admin";
     }
