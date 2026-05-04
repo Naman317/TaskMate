@@ -280,12 +280,7 @@ const Dashboard = () => {
                 ))}
               </tbody>
             </table>
-            <AddTask
-        open={open}
-        setOpen={setOpen}
-        refresh={fetchDashboard}
-      />
-    </div>
+          </div>
         </CardContent>
       </Card>
 
