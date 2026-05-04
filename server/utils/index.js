@@ -7,9 +7,12 @@ export const createJWT = (req, res, userId) => {
   });
 
   const host = req.get("host") || req.headers.host || "";
-  const isProduction = process.env.NODE_ENV === "production" || !host.includes("localhost");
+  const origin = req.get("origin") || "";
+  const isProduction = process.env.NODE_ENV === "production" || 
+                       !host.includes("localhost") || 
+                       origin.includes("vercel.app");
 
-  console.log(`Setting cookie for host: ${host}, isProduction: ${isProduction}`);
+  console.log(`Setting cookie for host: ${host}, origin: ${origin}, isProduction: ${isProduction}`);
 
   res.cookie("token", token, {
     httpOnly: true,

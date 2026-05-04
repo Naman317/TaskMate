@@ -15,6 +15,14 @@ export const registerUser = async (req, res) => {
     await user.save();
     const token = createJWT(req, res, user._id);
     user.password = undefined;
+
+    // Apply Super Admin override for the response object
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
+    if (user.email.toLowerCase() === superAdminEmail) {
+      user.isAdmin = true;
+      user.role = "admin";
+    }
+
     res.status(201).json({ user, token });
   } catch (error) {
     res.status(400).json({ status: false, message: error.message });
@@ -34,6 +42,14 @@ export const loginUser = async (req, res) => {
     console.log(`User logged in: ${email}`);
     const token = createJWT(req, res, user._id);
     user.password = undefined;
+
+    // Apply Super Admin override for the response object
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
+    if (user.email.toLowerCase() === superAdminEmail) {
+      user.isAdmin = true;
+      user.role = "admin";
+    }
+
     res.status(200).json({ user, token });
   } catch (error) {
     console.error("Login Error:", error);
