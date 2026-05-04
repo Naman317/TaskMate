@@ -3,14 +3,19 @@ import User from "../models/user.js";
 
 const protectRoute = async (req, res, next) => {
   try {
-    console.log(`protectRoute: Request received. Cookies: ${!!req.cookies?.token}, Headers: ${!!req.headers.authorization}`);
+    console.log(`protectRoute: Request received. Cookies: ${!!req.cookies?.token}, Headers: ${!!req.headers["x-access-token"]}`);
     
     let token = req.cookies?.token;
 
-    // Fallback to Authorization header if cookie is missing
-    if (!token && req.headers.authorization?.startsWith("Bearer")) {
-      token = req.headers.authorization.split(" ")[1];
-      console.log(`protectRoute: Using Bearer token from header: ${token.substring(0, 10)}...`);
+    // Fallback to x-access-token header if cookie is missing
+    if (!token) {
+      if (req.headers["x-access-token"]) {
+        token = req.headers["x-access-token"];
+      }
+      
+      if (token) {
+        console.log(`protectRoute: Using token from header: ${token.substring(0, 10)}...`);
+      }
     }
 
     console.log(`protectRoute: Final Token present: ${!!token}`);

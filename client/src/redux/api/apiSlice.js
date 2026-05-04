@@ -12,6 +12,7 @@ export const apiSlice = createApi({
       const token = localStorage.getItem("token");
       console.log(`RTK Query Request, Token found: ${!!token}`);
       if (token) {
+        headers.set("x-access-token", token);
         headers.set("authorization", `Bearer ${token}`);
       }
       return headers;
