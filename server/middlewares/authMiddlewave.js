@@ -14,7 +14,7 @@ const protectRoute = async (req, res, next) => {
 
       req.user = {
         email: resp.email,
-        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === "admin@gmail.com",
+        isAdmin: resp.isAdmin || resp.email?.toLowerCase() === (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase(),
         role: resp.role,
         userId: decodedToken.userId,
       };
@@ -57,7 +57,8 @@ const allowRoles = (...roles) => {
 };
 
 const isSuperAdmin = (req, res, next) => {
-  if (req.user?.email?.toLowerCase() === "admin@gmail.com") {
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
+  if (req.user?.email?.toLowerCase() === superAdminEmail) {
     return next();
   }
   return res.status(403).json({
