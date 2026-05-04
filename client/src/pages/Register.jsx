@@ -56,21 +56,21 @@ const Register = () => {
             <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
               <ArrowLeft size={18} /> Back to Login
             </Link>
-            
+
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center font-bold text-2xl border border-white/30">
                 T
               </div>
               <span className="text-3xl font-bold tracking-tight text-white">Tasky</span>
             </div>
-            
+
             <h1 className="text-4xl font-extrabold leading-tight mb-6">
               Join the future of <span className="text-white/80">productivity.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 mb-10 leading-relaxed">
               Experience the most intuitive way to manage your work, automate your workflows, and grow your team.
             </p>
-            
+
             <div className="space-y-4">
               {[
                 "14-day free trial",
@@ -119,7 +119,7 @@ const Register = () => {
                 error={errors.name?.message}
               />
             </div>
-            
+
             <div className="md:col-span-2">
               <Input
                 label="Email Address"
@@ -135,7 +135,7 @@ const Register = () => {
                 label="Password"
                 placeholder="••••••••"
                 type="password"
-                {...register("password", { 
+                {...register("password", {
                   required: "Password is required",
                   minLength: { value: 6, message: "Minimum 6 characters" }
                 })}
@@ -144,11 +144,11 @@ const Register = () => {
             </div>
 
             <div className="md:col-span-2 flex items-start gap-2">
-              <input 
-                type="checkbox" 
-                id="terms" 
-                className="mt-1 w-4 h-4 rounded border-input text-primary focus:ring-primary/20" 
-                required 
+              <input
+                type="checkbox"
+                id="terms"
+                className="mt-1 w-4 h-4 rounded border-input text-primary focus:ring-primary/20"
+                required
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground">
                 I agree to the <Link to="#" className="text-primary font-semibold hover:underline">Terms of Service</Link> and <Link to="#" className="text-primary font-semibold hover:underline">Privacy Policy</Link>.

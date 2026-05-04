@@ -32,10 +32,11 @@ const Login = () => {
     toast.promise(loginPromise, {
       loading: "Signing you in...",
       success: (res) => {
-        const userData = res?.data;
-        if (!userData) throw new Error("Invalid response from server");
-        dispatch(setUser(userData));
-        localStorage.setItem("user", JSON.stringify(userData));
+        console.log("LOGIN SUCCESS RAW DATA:", res.data);
+        const { user, token } = res.data;
+        console.log("DESTRUCTURED TOKEN:", !!token);
+        dispatch(setUser({ user, token }));
+        localStorage.setItem("user", JSON.stringify(user));
         navigate("/dashboard");
         return "Welcome back!";
       },
