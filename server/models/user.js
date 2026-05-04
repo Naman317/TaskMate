@@ -9,7 +9,7 @@ const userSchema = new Schema(
     isAdmin: { type: Boolean, default: false },
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     isActive: { type: Boolean, default: true },
-    role: {type: String,enum: ["user", "admin"],default: "user"},
+    role: { type: String, enum: ["user", "admin"], default: "user" },
   },
   { timestamps: true }
 );

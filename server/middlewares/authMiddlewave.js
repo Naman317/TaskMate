@@ -34,7 +34,7 @@ const protectRoute = async (req, res, next) => {
 };
 
 const isAdminRoute = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+  if (req.user && (req.user.isAdmin || req.user.role === "admin")) {
     next();
   } else {
     return res.status(401).json({
@@ -46,7 +46,11 @@ const isAdminRoute = (req, res, next) => {
 
 const allowRoles = (...roles) => {
   return (req, res, next) => {
-    if (req.user && roles.includes(req.user.role)) {
+    // Super admin (identified by email) bypasses role checks
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
+    const isSuper = req.user?.email?.toLowerCase() === superAdminEmail;
+
+    if (req.user && (isSuper || roles.includes(req.user.role))) {
       return next();
     }
     return res.status(403).json({
@@ -63,7 +67,7 @@ const isSuperAdmin = (req, res, next) => {
   }
   return res.status(403).json({
     status: false,
-    message: `Access denied. Super Admin only. (Current: ${req.user?.email})`,
+    message: `Access denied. Super Admin only.`,
   });
 };
 
