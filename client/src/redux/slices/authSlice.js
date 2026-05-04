@@ -14,12 +14,16 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action) => {
+      console.log("setUser payload structure:", Object.keys(action.payload || {}));
       const { user, token } = action.payload?.user ? action.payload : { user: action.payload, token: action.payload?.token };
-      console.log(`setUser: Saving token to localStorage: ${!!token}`);
+      console.log(`setUser: Received user: ${!!user}, Received token: ${!!token}`);
       state.user = user;
       state.rehydrationComplete = true;
       if (token) {
         localStorage.setItem("token", token);
+        console.log("setUser: Token saved to localStorage");
+      } else {
+        console.warn("setUser: NO TOKEN RECEIVED IN PAYLOAD");
       }
     },
     logoutUser: (state) => {

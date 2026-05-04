@@ -13,7 +13,8 @@ const API = axios.create({
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  console.log(`Axios Request: ${config.url}, Token found: ${!!token}`);
+  const user = localStorage.getItem("user");
+  console.log(`[Axios Debug] URL: ${config.url}, Token in Storage: ${!!token}, User in Storage: ${!!user}`);
   if (token) {
     config.headers["x-access-token"] = token;
     config.headers.Authorization = `Bearer ${token}`;
