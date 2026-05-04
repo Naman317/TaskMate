@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -28,7 +28,7 @@ app.use(
         process.env.FRONTEND_URL,
       ];
 
-      const isAllowed = !origin || 
+      const isAllowed = !origin ||
         allowedOrigins.includes(origin) ||
         origin.includes("vercel.app") ||
         origin.includes("onrender.com");
@@ -53,9 +53,8 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use("/api", routes);
-app.use("/api/task", taskRoutes); 
-app.use("/api/user", userRoutes); 
-app.use("/", routes); 
+app.use("/api/task", taskRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running correctly...");
