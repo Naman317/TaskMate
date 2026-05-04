@@ -13,10 +13,9 @@ export const registerUser = async (req, res) => {
 
     const user = new User({ name, email, password, isAdmin, title, role });
     await user.save();
-    createJWT(req, res, user._id);
-
+    const token = createJWT(req, res, user._id);
     user.password = undefined;
-    res.status(201).json(user);
+    res.status(201).json({ user, token });
   } catch (error) {
     res.status(400).json({ status: false, message: error.message });
   }
@@ -33,9 +32,9 @@ export const loginUser = async (req, res) => {
     if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
 
     console.log(`User logged in: ${email}`);
-    createJWT(req, res, user._id);
+    const token = createJWT(req, res, user._id);
     user.password = undefined;
-    res.status(200).json(user);
+    res.status(200).json({ user, token });
   } catch (error) {
     console.error("Login Error:", error);
     res.status(400).json({ status: false, message: error.message });

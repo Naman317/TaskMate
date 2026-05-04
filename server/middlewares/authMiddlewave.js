@@ -4,7 +4,13 @@ import User from "../models/user.js";
 const protectRoute = async (req, res, next) => {
   try {
     let token = req.cookies?.token;
-    console.log(`protectRoute: Token present: ${!!token}`);
+
+    // Fallback to Authorization header if cookie is missing
+    if (!token && req.headers.authorization?.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    console.log(`protectRoute: Token present: ${!!token} (${token ? "Found" : "Not Found"})`);
 
     if (token) {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
