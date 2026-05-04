@@ -50,7 +50,9 @@ const Navbar = () => {
             </div>
             <div className="hidden md:flex flex-col items-start mr-2">
               <span className="text-xs font-semibold text-foreground leading-none">{user?.name}</span>
-              <span className="text-[10px] text-muted-foreground">{user?.title || "Team Member"}</span>
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {user?.email === "admin@gmail.com" ? "Super Admin" : (user?.role || "Team Member")}
+              </span>
             </div>
           </HeadlessMenu.Button>
 
