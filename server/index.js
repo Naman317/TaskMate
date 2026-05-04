@@ -3,11 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
+import { dbConnection } from "./utils/index.js";
 import { errorHandler, routeNotFound } from "./middlewares/errorMiddlewaves.js";
 import routes from "./routes/index.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import { dbConnection } from "./utils/index.js";
 
 dotenv.config();
 
@@ -17,26 +17,26 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-app.set("trust proxy", 1); // Enable trust proxy for Render/Vercel load balancers
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://tasky-one-iota.vercel.app",
-];
+app.set("trust proxy", 1); 
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        process.env.FRONTEND_URL,
+      ];
 
-      const isAllowed = allowedOrigins.includes(origin) ||
-        origin?.endsWith?.(".vercel.app") ||
-        process.env.FRONTEND_URL === origin;
+      const isAllowed = !origin || 
+        allowedOrigins.includes(origin) ||
+        origin.includes("vercel.app") ||
+        origin.includes("onrender.com");
 
       if (isAllowed) {
         callback(null, true);
       } else {
+        console.error(`CORS Blocked Origin: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -45,22 +45,20 @@ app.use(
   })
 );
 
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(cookieParser());
-
 app.use(morgan("dev"));
+
 app.use("/api", routes);
-app.use("/api/task", taskRoutes); // Direct mount for safety
-app.use("/api/user", userRoutes); // Direct mount for safety
+app.use("/api/task", taskRoutes); 
+app.use("/api/user", userRoutes); 
 app.use("/", routes); 
 
 app.get("/", (req, res) => {
   res.send("Server is running correctly...");
 });
+
 app.use(routeNotFound);
 app.use(errorHandler);
 
