@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const RAW_URI = "https://tasky-production-render.onrender.com"
+const RAW_URI = "https://tasky-production-render.onrender.com";
 const cleanURI = RAW_URI.replace(/\/+$/, "");
 const API_URI = (cleanURI.endsWith("/api") ? cleanURI : `${cleanURI}/api`) + "/";
 
