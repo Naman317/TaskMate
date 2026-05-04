@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
+app.set("trust proxy", 1); // Enable trust proxy for Render/Vercel load balancers
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
