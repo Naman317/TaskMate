@@ -33,6 +33,8 @@ app.use(
         origin.includes("vercel.app") ||
         origin.includes("onrender.com");
 
+      console.log(`CORS check for origin: ${origin} -> Allowed: ${isAllowed}`);
+
       if (isAllowed) {
         callback(null, true);
       } else {

@@ -19,6 +19,14 @@ const protectRoute = async (req, res, next) => {
         "isAdmin email role"
       );
 
+      if (!resp) {
+        console.error(`User not found for ID: ${decodedToken.userId}`);
+        return res.status(401).json({
+          status: false,
+          message: "User not found. Please login again.",
+        });
+      }
+
       req.user = {
         email: resp.email,
         isAdmin: resp.isAdmin || resp.email?.toLowerCase() === (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase(),
