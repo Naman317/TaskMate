@@ -14,16 +14,19 @@ export const registerUser = async (req, res) => {
     const user = new User({ name, email, password, isAdmin, title, role });
     await user.save();
     const token = createJWT(req, res, user._id);
-    user.password = undefined;
+    
+    // Convert to plain object to ensure overrides work correctly
+    const userObj = user.toObject();
+    delete userObj.password;
 
     // Apply Super Admin override for the response object
     const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
-    if (user.email.toLowerCase() === superAdminEmail) {
-      user.isAdmin = true;
-      user.role = "admin";
+    if (userObj.email.toLowerCase() === superAdminEmail) {
+      userObj.isAdmin = true;
+      userObj.role = "admin";
     }
 
-    res.status(201).json({ user, token });
+    res.status(201).json({ user: userObj, token });
   } catch (error) {
     res.status(400).json({ status: false, message: error.message });
   }
@@ -41,16 +44,19 @@ export const loginUser = async (req, res) => {
 
     console.log(`User logged in: ${email}`);
     const token = createJWT(req, res, user._id);
-    user.password = undefined;
+    
+    // Convert to plain object to ensure overrides work correctly in JSON response
+    const userObj = user.toObject();
+    delete userObj.password;
 
     // Apply Super Admin override for the response object
     const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || "admin@gmail.com").toLowerCase();
-    if (user.email.toLowerCase() === superAdminEmail) {
-      user.isAdmin = true;
-      user.role = "admin";
+    if (userObj.email.toLowerCase() === superAdminEmail) {
+      userObj.isAdmin = true;
+      userObj.role = "admin";
     }
 
-    res.status(200).json({ user, token });
+    res.status(200).json({ user: userObj, token });
   } catch (error) {
     console.error("Login Error:", error);
     res.status(400).json({ status: false, message: error.message });
