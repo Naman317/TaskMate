@@ -10,6 +10,7 @@ export const apiSlice = createApi({
     baseUrl: API_URI,
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("token");
+      console.log(`RTK Query Request, Token found: ${!!token}`);
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
       }

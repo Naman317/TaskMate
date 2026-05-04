@@ -3,17 +3,22 @@ import User from "../models/user.js";
 
 const protectRoute = async (req, res, next) => {
   try {
+    console.log(`protectRoute: Request received. Cookies: ${!!req.cookies?.token}, Headers: ${!!req.headers.authorization}`);
+    
     let token = req.cookies?.token;
 
     // Fallback to Authorization header if cookie is missing
     if (!token && req.headers.authorization?.startsWith("Bearer")) {
       token = req.headers.authorization.split(" ")[1];
+      console.log(`protectRoute: Using Bearer token from header: ${token.substring(0, 10)}...`);
     }
 
-    console.log(`protectRoute: Token present: ${!!token} (${token ? "Found" : "Not Found"})`);
+    console.log(`protectRoute: Final Token present: ${!!token}`);
 
+    const secret = process.env.JWT_SECRET?.trim() || "";
     if (token) {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      console.log(`protectRoute: Verifying token with secret: ${secret.substring(0, 2)}...`);
+      const decodedToken = jwt.verify(token, secret);
 
       const resp = await User.findById(decodedToken.userId).select(
         "isAdmin email role"
