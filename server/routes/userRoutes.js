@@ -18,7 +18,7 @@ import {
 const router = express.Router();
 router.put("/update-role/:id", protectRoute, isSuperAdmin, updateUserRole);
 
-router.post("/register", protectRoute, isSuperAdmin, registerUser);
+router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 

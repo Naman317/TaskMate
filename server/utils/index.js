@@ -6,7 +6,10 @@ export const createJWT = (req, res, userId) => {
     expiresIn: "1d",
   });
 
-  const isProduction = process.env.NODE_ENV === "production" || !req.get("host").includes("localhost");
+  const host = req.get("host") || req.headers.host || "";
+  const isProduction = process.env.NODE_ENV === "production" || !host.includes("localhost");
+
+  console.log(`Setting cookie for host: ${host}, isProduction: ${isProduction}`);
 
   res.cookie("token", token, {
     httpOnly: true,

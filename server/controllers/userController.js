@@ -32,10 +32,12 @@ export const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ status: false, message: "Invalid email or password" });
 
+    console.log(`User logged in: ${email}`);
     createJWT(req, res, user._id);
     user.password = undefined;
     res.status(200).json(user);
   } catch (error) {
+    console.error("Login Error:", error);
     res.status(400).json({ status: false, message: error.message });
   }
 };
