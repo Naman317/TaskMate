@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const RAW_URI = import.meta.env.VITE_APP_BASE_URL || "http://localhost:5055";
+const RAW_URI = import.meta.env.VITE_APP_BASE_URL || (import.meta.env.PROD ? "https://tasky-production-render.onrender.com" : "http://localhost:5055");
 const cleanURI = RAW_URI.replace(/\/+$/, "");
 const API_URI = (cleanURI.endsWith("/api") ? cleanURI : `${cleanURI}/api`) + "/";
 
