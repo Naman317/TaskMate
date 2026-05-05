@@ -13,7 +13,7 @@ import BoardView from "../components/BoardView";
 import Table from "../components/task/Table";
 import AddTask from "../components/task/AddTask";
 import useToast from "../hooks/useToast";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import { useGetTasksQuery, useDeleteRestoreTaskMutation, useUpdateTaskMutation, useTrashTaskMutation } from "../redux/api/taskApiSlice";
 import { useSelector } from "react-redux";
 
@@ -384,7 +384,7 @@ const Tasks = () => {
               variant="outline"
               icon={<Info size={18} className="text-blue-500" />}
               onClick={() => {
-                toast(
+                sonnerToast(
                   <div className="flex flex-col gap-1">
                     <h4 className="font-bold">Voice Commands Guide</h4>
                     <p className="text-sm text-gray-600">Try saying:</p>
