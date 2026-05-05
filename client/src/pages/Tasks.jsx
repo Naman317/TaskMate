@@ -58,7 +58,7 @@ const Tasks = () => {
 
   const handleVoiceCommand = async (command) => {
     const lowerCommand = command.toLowerCase().trim();
-    
+
     // View Toggling
     if (lowerCommand.includes("switch to list view") || lowerCommand.includes("list view")) {
       setView("list");
@@ -102,16 +102,16 @@ const Tasks = () => {
       if (match) {
         const titleToFind = match[1].trim();
         let targetStage = match[2].trim();
-        
+
         if (targetStage === "to do") targetStage = "todo";
-        
+
         if (!["todo", "in progress", "completed"].includes(targetStage)) {
           toast.error(`Unknown stage "${targetStage}". Try "todo", "in progress", or "completed".`);
           return;
         }
 
         const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
-        
+
         if (!isAdmin) {
           toast.error("Only admins can move tasks to different stages.");
           return;
@@ -125,7 +125,7 @@ const Tasks = () => {
             }).unwrap();
             toast.success(`Moved "${taskToMove.title}" to ${targetStage}`);
           } catch (err) {
-             toast.error(err?.data?.message || "Failed to move task");
+            toast.error(err?.data?.message || "Failed to move task");
           }
         } else {
           toast.error(`Could not find task "${titleToFind}"`);
@@ -144,15 +144,15 @@ const Tasks = () => {
       }
 
       if (taskToMove) {
-          try {
-            await updateTask({
-              id: taskToMove._id,
-              data: { ...taskToMove, stage: "completed", team: taskToMove.team?.map(t => t._id || t) }
-            }).unwrap();
-            toast.success(`Marked "${taskToMove.title}" as completed`);
-          } catch (err) {
-             toast.error(err?.data?.message || "Failed to mark as completed");
-          }
+        try {
+          await updateTask({
+            id: taskToMove._id,
+            data: { ...taskToMove, stage: "completed", team: taskToMove.team?.map(t => t._id || t) }
+          }).unwrap();
+          toast.success(`Marked "${taskToMove.title}" as completed`);
+        } catch (err) {
+          toast.error(err?.data?.message || "Failed to mark as completed");
+        }
       } else {
         toast.error(`Could not find task "${titleToFind}"`);
       }
@@ -190,7 +190,7 @@ const Tasks = () => {
     if (lowerCommand.startsWith("delete task ")) {
       const titleToFind = lowerCommand.replace("delete task ", "").trim();
       const taskToDelete = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
-      
+
       if (taskToDelete) {
         if (taskToDelete.createdByRole === "admin" && !user?.isAdmin) {
           toast.error("You are not authorized to trash this admin-created task.");
@@ -208,7 +208,7 @@ const Tasks = () => {
       return;
     }
 
-    
+
     // ── Bulk: Delete All Tasks ──────────────────────────────────────────
     if (
       lowerCommand.includes("delete all tasks") ||
@@ -384,10 +384,28 @@ const Tasks = () => {
               variant="outline"
               icon={<Info size={18} className="text-blue-500" />}
               onClick={() => {
-                toast.info(
-                  "Voice Commands Guide",
-                  "Try saying: 'Create task [name]' • 'Edit task [name]' • 'Move [task] to in progress' • 'Mark [task] as completed' • 'Delete task [name]' • 'Delete all tasks' • 'Mark all as completed'"
+                const message = (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-gray-900 font-semibold">Voice Commands Guide</span>
+                    <div className="text-gray-700 text-sm">
+                      <p className="font-medium mb-1">Try saying:</p>
+                      <ul className="list-disc pl-5 space-y-0.5">
+                        <li>Create task [name]</li>
+                        <li>Edit task [name]</li>
+                        <li>Move [task] to in progress</li>
+                        <li>Mark [task] as completed</li>
+                        <li>Delete task [name]</li>
+                        <li>Delete all tasks</li>
+                        <li>Mark all as completed</li>
+                      </ul>
+                    </div>
+                  </div>
                 );
+                toast.info(message, {
+                  className: "bg-white text-gray-900 shadow-lg rounded-xl",
+                  duration: 8000, // 8 seconds to read
+                  icon: "🎤",
+                });
               }}
               title="What can I say?"
             />
