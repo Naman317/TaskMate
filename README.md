@@ -31,7 +31,7 @@ Native browser Web Speech API integration enables hands-free operation:
 
 ### API Architecture & Endpoints
 
-The backend exposes a mature, versioned RESTful API (`/api/v1/*` structured). All protected routes require a valid JWT passed via `HttpOnly Cookie` OR the `Authorization: Bearer` header.
+The backend exposes a mature, versioned RESTful API (`/api/*` structured). All protected routes require a valid JWT passed via `HttpOnly Cookie` OR the `Authorization: Bearer` header.
 
 #### User & Authentication API (`/api/user`)
 | Method | Endpoint | Access Level | Description | Payload / Query |
