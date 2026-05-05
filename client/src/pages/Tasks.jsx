@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter, Download } from "lucide-react";
+import { LayoutGrid, List, Plus, Mic, MicOff, Search, Filter, Download, Info } from "lucide-react";
 
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -379,14 +379,24 @@ const Tasks = () => {
           </div>
 
 
-
-          <Button
-            variant={listening ? "secondary" : "outline"}
-            icon={listening ? <Mic className="animate-pulse text-red-500" size={18} /> : <Mic size={18} />}
-            onClick={startVoiceRecognition}
-            className="hidden lg:flex"
-          />
-
+          <div className="hidden lg:flex items-center gap-2">
+            <Button
+              variant="outline"
+              icon={<Info size={18} className="text-blue-500" />}
+              onClick={() => {
+                toast.info("Voice Commands Guide", {
+                  description: "Try saying:\n• 'Create task [name]'\n• 'Edit task [name]'\n• 'Mark [task] as completed'\n• 'Delete task [name]'\n• 'Mark all as completed'"
+                });
+              }}
+              title="What can I say?"
+            />
+            <Button
+              variant={listening ? "secondary" : "outline"}
+              icon={listening ? <Mic className="animate-pulse text-red-500" size={18} /> : <Mic size={18} />}
+              onClick={startVoiceRecognition}
+              title={listening ? "Stop Listening" : "Start Voice Commands"}
+            />
+          </div>
           <Button
             label="Create Task"
             icon={<Plus size={18} />}
