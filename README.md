@@ -1,161 +1,121 @@
-#  Tasky - Task Management Platform
+# Tasky - Professional Task Management Platform
 
-
-Tasky is a professional, task management platform built with the MERN stack. Designed with a focus on high performance, modern UI/UX aesthetics, and scalable architecture, Tasky provides teams with an intuitive environment to organize, track, and complete their work efficiently.
-
+Tasky is a high-performance, scalable task management platform engineered using the MERN stack (MongoDB, Express.js, React, Node.js). Designed for team productivity, it provides a seamless interface for organizing workflows, tracking progress, and managing team assignments securely.
 
 ---
 
-## Features
+## 🌟 Core Features
 
 ### Advanced Role-Based Access Control (RBAC)
-Tasky implements a strict 3-tier hierarchy to ensure organizational security:
-*   **Super Admin (`admin@gmail.com ||pass: admin@gmail.com`)**: Full system control. Can promote/demote other users and retains ultimate authority over team management.
-*   **Administrator**: Can create, manage, and assign tasks across the team. Cannot modify the roles of other administrators.
-*   **Team Member**: Focused, distraction-free environment. Can only view and update tasks specifically assigned to them.
+A strict 3-tier hierarchy ensures system security and data integrity:
+- **Super Admin (`admin@gmail.com`)**: Complete system authority. Can manage users, alter permissions, and oversee all platform activity.
+- **Administrator**: Authorized to create, assign, and manage tasks across the organization. Restricted from modifying core administrative roles.
+- **Team Member**: Dedicated workspace environment limited to viewing and updating assigned tasks.
 
-### Professional UI/UX & Interactivity
-*   **Zero-Latency Drag & Drop**: Move tasks between stages ("To Do", "In Progress", "Completed") on the interactive Board View. Powered by optimistic UI updates, the interface responds instantly without waiting for network requests.
+### Modern UI/UX Architecture
+- **Optimistic UI Updates**: Zero-latency drag-and-drop task progression between Kanban stages ("To Do", "In Progress", "Completed") without waiting for network resolution.
+- **Dynamic Interface**: Engineered with Tailwind CSS and Framer Motion for responsive layouts, subtle glassmorphism, and fluid micro-interactions.
+- **Automated Overdue Tracking**: Real-time algorithmic surfacing of overdue tasks on the primary dashboard analytics panel.
 
-*   **Modern Aesthetics**: Built with Tailwind CSS, featuring subtle glassmorphism, fluid Framer Motion animations, and responsive mobile drawers.
+### Accessibility & Voice Control
+Native browser Web Speech API integration enables hands-free operation:
+- `"Create task [name]"` - Initializes a pre-filled task creation sequence.
+- `"Search for [keyword]"` - Triggers real-time client-side filtering.
+- `"Move [task] to in progress"` - Executes API-driven stage transitions via voice.
+- `"Mark [task] as completed"` - Instantly resolves designated tasks.
 
-*   **Advanced Voice Commands**: Use browser-native voice recognition to control the entire application hands-free. Click the microphone icon and try saying:
-    *   **"Create task [name]"** - Opens the task creation modal pre-filled with your task name.
-    *   **"Search for [keyword]"** - Instantly filters your view for specific terms.
-    *   **"Move [task] to in progress"** - Magically moves a task across the board via API.
-    *   **"Mark [task] as completed"** - Instantly closes out a task.
-    *   **"Switch to list view"** - Toggles the layout instantly.
-    *   **"Export tasks"** - Triggers a CSV download of your current view.
+---
 
-*   **Automated Overdue Tracking**: The system intelligently calculates overdue tasks and surfaces them on a dedicated dashboard tab.
+## 💻 Technical Stack
 
+### Frontend Architecture
+- **Framework**: React 18 + Vite (optimized build tooling and HMR)
+- **State Management**: Redux Toolkit (global state) & RTK Query (server state and caching)
+- **Styling**: Tailwind CSS, Headless UI (accessible unstyled components)
+- **Routing**: React Router DOM v6
+- **Interactions**: `@hello-pangea/dnd` (robust drag-and-drop), `framer-motion` (animations)
 
-
-## Architecture Diagram
-
-```mermaid
-graph TD
-    subgraph Client [Frontend - React + Vite]
-        UI[UI Components / Tailwind]
-        State[Redux Store & RTK Query]
-        Router[React Router DOM]
-        
-        UI <--> State
-        UI <--> Router
-    end
-
-    subgraph Server [Backend - Node.js + Express]
-        API[Express Routes]
-        Auth[JWT Middleware]
-        Controllers[Business Logic Controllers]
-        
-        API --> Auth
-        Auth --> Controllers
-    end
-
-    subgraph Database [Database]
-        DB[(MongoDB via Mongoose)]
-    end
-
-    State -- HTTP Requests (Credentials: Include) --> API
-    Controllers <--> DB
-```
-
-## 💻 Tech Stack
-
-**Frontend Architecture:**
-*   **Framework**: React 18 + Vite (for lightning-fast HMR and optimized builds)
-*   **State Management**: Redux Toolkit & RTK Query
-*   **Styling & UI**: Tailwind CSS, Headless UI, Framer Motion
-*   **Interactions**: `@hello-pangea/dnd` (Drag & Drop), `sonner` (Toast notifications)
-*   **Routing**: React Router DOM v6
-
-**Backend Architecture:**
-*   **Runtime**: Node.js
-*   **Framework**: Express.js
-*   **Database**: MongoDB & Mongoose ORM
-*   **Security**: JSON Web Tokens (JWT), bcryptjs, Cookie-Parser
+### Backend Architecture
+- **Runtime Environment**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB via Mongoose ORM
+- **Security & Auth**: JSON Web Tokens (JWT), HTTP-only cookies, bcryptjs password hashing
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   Node.js (v16 or higher)
-*   MongoDB instance (local or Atlas cluster)
+- Node.js (v18+ recommended)
+- MongoDB Instance (Local or Atlas)
 
-### 1. Clone the repository
+### 1. Local Setup
+Clone the repository to your local machine:
 ```bash
 git clone https://github.com/Naman317/Tasky.git
 cd Tasky
 ```
 
-### 2. Backend Setup
-1. Navigate to the server directory:
-   ```bash
-   cd server
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the `server` directory and add the following variables:
-   ```env
-   PORT=8800
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_super_secret_jwt_key
-   NODE_ENV=development
-   ```
-4. Start the development server:
-   ```bash
-   npm start
-   ```
+### 2. Backend Initialization
+```bash
+cd server
+npm install
+```
+Create a `.env` file in the `/server` directory:
+```env
+PORT=5055
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_secure_jwt_secret
+NODE_ENV=development
+```
+Start the backend development server:
+```bash
+npm run dev
+```
 
-### 3. Frontend Setup
-1. Open a new terminal and navigate to the client directory:
-   ```bash
-   cd client
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the `client` directory:
-   ```env
-   VITE_APP_BASE_URL=http://localhost:8800/api
-   ```
-4. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 📖 Application Structure
-
-```text
-├── client/
-│   ├── src/
-│   │   ├── components/      # Reusable UI elements & Modals
-│   │   ├── pages/           # Route-level components (Tasks, Dashboard, Users)
-│   │   ├── redux/           # Global state slices & RTK Query API endpoints
-│   │   └── utils/           # Helper functions (date formatting, etc.)
-│   └── package.json
-│
-├── server/
-│   ├── controllers/         # Business logic for Users and Tasks
-│   ├── middlewares/         # JWT Verification & RBAC protection
-│   ├── models/              # Mongoose Database Schemas
-│   ├── routes/              # Express API route definitions
-│   └── index.js             # Server entry point
+### 3. Frontend Initialization
+Open a new terminal session:
+```bash
+cd client
+npm install
+```
+Create a `.env` file in the `/client` directory:
+```env
+VITE_APP_BASE_URL=http://localhost:5055/api
+```
+Start the Vite development server:
+```bash
+npm run dev
 ```
 
 ---
 
-## 🤝 Contribution Guidelines
-This project adheres to professional SDE 2 standards. When contributing:
-1. Ensure API calls are added to `apiSlice` rather than using direct Axios calls where possible.
-2. Maintain the established Tailwind CSS design system.
-3. Keep the 3-tier role architecture in mind when exposing new backend endpoints.
+## 📖 Directory Structure
 
-This project is made with curiosity by Naman .
+```text
+├── client/
+│   ├── src/
+│   │   ├── components/      # Modular, reusable UI components
+│   │   ├── pages/           # Route-level views (Dashboard, Tasks)
+│   │   ├── redux/           # Global store configurations and RTK Query endpoints
+│   │   └── assets/          # Static assets and Axios interceptor configurations
+│   └── vite.config.js
+│
+├── server/
+│   ├── controllers/         # Core business logic and request handling
+│   ├── middlewares/         # JWT validation, error handling, and RBAC guards
+│   ├── models/              # Mongoose schema definitions
+│   ├── routes/              # Express API endpoint mapping
+│   └── index.js             # Application entry point and server configuration
+```
+
+---
+
+## 🤝 Contribution Standards
+
+When contributing to this repository, please adhere to the following software engineering standards:
+1. **State Management**: Utilize `RTK Query` in the `apiSlice` for all network requests to leverage built-in caching and invalidation, rather than one-off Axios calls.
+2. **Component Design**: Maintain the established Tailwind CSS design system. Ensure new components are responsive and accessible.
+3. **Security**: Respect the established RBAC middleware (`protectRoute`, `isAdminRoute`) when exposing or modifying backend endpoints.
+
+*Engineered by Naman.*
