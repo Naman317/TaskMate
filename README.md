@@ -3,12 +3,15 @@
 Tasky is a high-performance, scalable task management platform engineered using the MERN stack (MongoDB, Express.js, React, Node.js). Designed for team productivity, it provides a seamless interface for organizing workflows, tracking progress, and managing team assignments securely.
 
 ---
+## Live 
 
-## 🌟 Core Features
+- Vercel + Railway → https://tasky-one-iota.vercel.app/
+- Netlify + Render → https://tasky-project-assignment.netlify.app
+## Core Features
 
 ### Advanced Role-Based Access Control (RBAC)
 A strict 3-tier hierarchy ensures system security and data integrity:
-- **Super Admin (`admin@gmail.com`)**: Complete system authority. Can manage users, alter permissions, and oversee all platform activity.
+- **Super Admin (`admin@gmail.com || pass: admin@gmail.com`)**: Complete system authority. Can manage users, alter permissions, and oversee all platform activity.
 - **Administrator**: Authorized to create, assign, and manage tasks across the organization. Restricted from modifying core administrative roles.
 - **Team Member**: Dedicated workspace environment limited to viewing and updating assigned tasks.
 
@@ -24,7 +27,9 @@ Native browser Web Speech API integration enables hands-free operation:
 - `"Move [task] to in progress"` - Executes API-driven stage transitions via voice.
 - `"Mark [task] as completed"` - Instantly resolves designated tasks.
 
-### 🔌 API Architecture & Endpoints
+---
+
+### API Architecture & Endpoints
 
 The backend exposes a mature, versioned RESTful API (`/api/v1/*` structured). All protected routes require a valid JWT passed via `HttpOnly Cookie` OR the `Authorization: Bearer` header.
 
@@ -63,9 +68,8 @@ The backend exposes a mature, versioned RESTful API (`/api/v1/*` structured). Al
 5. **Controller Execution**: Executes Mongoose aggregate pipelines or CRUD operations.
 6. **Error Handlers (`errorHandler`)**: Catches async rejections and returns standardized `{ status: false, message: string }` payload.
 
----
 
-## 💻 Technical Stack
+## Technical Stack
 
 ### Frontend Architecture
 - **Framework**: React 18 + Vite (optimized build tooling and HMR)
@@ -82,7 +86,7 @@ The backend exposes a mature, versioned RESTful API (`/api/v1/*` structured). Al
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18+ recommended)
@@ -126,35 +130,9 @@ Start the Vite development server:
 ```bash
 npm run dev
 ```
-
 ---
 
-## 📖 Directory Structure
+<div align="center">
+Designed, developed, and deployed with curiosity by Naman Sharma.
+</div>
 
-```text
-├── client/
-│   ├── src/
-│   │   ├── components/      # Modular, reusable UI components
-│   │   ├── pages/           # Route-level views (Dashboard, Tasks)
-│   │   ├── redux/           # Global store configurations and RTK Query endpoints
-│   │   └── assets/          # Static assets and Axios interceptor configurations
-│   └── vite.config.js
-│
-├── server/
-│   ├── controllers/         # Core business logic and request handling
-│   ├── middlewares/         # JWT validation, error handling, and RBAC guards
-│   ├── models/              # Mongoose schema definitions
-│   ├── routes/              # Express API endpoint mapping
-│   └── index.js             # Application entry point and server configuration
-```
-
----
-
-## 🤝 Contribution Standards
-
-When contributing to this repository, please adhere to the following software engineering standards:
-1. **State Management**: Utilize `RTK Query` in the `apiSlice` for all network requests to leverage built-in caching and invalidation, rather than one-off Axios calls.
-2. **Component Design**: Maintain the established Tailwind CSS design system. Ensure new components are responsive and accessible.
-3. **Security**: Respect the established RBAC middleware (`protectRoute`, `isAdminRoute`) when exposing or modifying backend endpoints.
-
-*Engineered by Naman.*
