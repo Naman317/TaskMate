@@ -384,9 +384,21 @@ const Tasks = () => {
               variant="outline"
               icon={<Info size={18} className="text-blue-500" />}
               onClick={() => {
-                toast.info("Voice Commands Guide", {
-                  description: "Try saying:\n• 'Create task [name]'\n• 'Edit task [name]'\n• 'Mark [task] as completed'\n• 'Delete task [name]'\n• 'Mark all as completed'"
-                });
+                toast(
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-bold">Voice Commands Guide</h4>
+                    <p className="text-sm text-gray-600">Try saying:</p>
+                    <ul className="text-sm list-disc pl-4 text-gray-700">
+                      <li>"Create task [name]"</li>
+                      <li>"Edit task [name]"</li>
+                      <li>"Move [task] to in progress"</li>
+                      <li>"Mark [task] as completed"</li>
+                      <li>"Delete task [name]"</li>
+                      <li>"Delete all tasks"</li>
+                      <li>"Mark all as completed"</li>
+                    </ul>
+                  </div>
+                );
               }}
               title="What can I say?"
             />
