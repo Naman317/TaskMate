@@ -26,11 +26,13 @@ import Chart from "../components/Chart";
 import useToast from "../hooks/useToast";
 
 import AddTask from "../components/task/AddTask";
+import AddUser from "../components/AddUser";
 
 const Dashboard = () => {
   const toast = useToast();
   const [summary, setSummary] = useState(null);
   const [open, setOpen] = useState(false);
+  const [openAddUser, setOpenAddUser] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
@@ -49,51 +51,57 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
+  const total = summary?.totalTasks || 0;
+  const completedCount = summary?.tasks?.["completed"] || 0;
+  const inProgressCount = summary?.tasks?.["in progress"] || 0;
+  const todoCount = summary?.tasks?.["todo"] || 0;
+  const overdueCount = summary?.overdueTasks || 0;
+
   const stats = summary ? [
     {
       label: "Total Tasks",
-      total: summary.totalTasks || 0,
+      total: total,
       icon: <ListTodo size={20} />,
       color: "text-blue-600",
       bg: "bg-blue-100",
-      trend: "+12%",
-      trendUp: true,
+      trend: total > 0 ? `${total} Total` : "0 Tasks",
+      trendUp: total > 0,
     },
     {
       label: "Completed",
-      total: summary.tasks["completed"] || 0,
+      total: completedCount,
       icon: <CheckCircle2 size={20} />,
       color: "text-emerald-600",
       bg: "bg-emerald-100",
-      trend: "+5%",
-      trendUp: true,
+      trend: total > 0 ? `${Math.round((completedCount / total) * 100)}% Rate` : "0%",
+      trendUp: completedCount > 0,
     },
     {
       label: "In Progress",
-      total: summary.tasks["in progress"] || 0,
+      total: inProgressCount,
       icon: <Clock size={20} />,
       color: "text-amber-600",
       bg: "bg-amber-100",
-      trend: "-2%",
-      trendUp: false,
+      trend: total > 0 ? `${Math.round((inProgressCount / total) * 100)}% Active` : "0%",
+      trendUp: inProgressCount > 0,
     },
     {
       label: "To Do",
-      total: summary.tasks["todo"] || 0,
+      total: todoCount,
       icon: <ListTodo size={20} />,
       color: "text-rose-600",
       bg: "bg-rose-100",
-      trend: "+8%",
-      trendUp: true,
+      trend: total > 0 ? `${Math.round((todoCount / total) * 100)}% Pending` : "0%",
+      trendUp: todoCount === 0,
     },
     {
       label: "Overdue",
-      total: summary.overdueTasks || 0,
+      total: overdueCount,
       icon: <AlertCircle size={20} />,
       color: "text-red-700",
       bg: "bg-red-100",
-      trend: "Critical",
-      trendUp: false,
+      trend: overdueCount > 0 ? `${overdueCount} Critical` : "All Clear",
+      trendUp: overdueCount === 0,
     },
   ] : [];
 
@@ -213,7 +221,7 @@ const Dashboard = () => {
               className="w-full mt-6" 
               label="Invite Member" 
               icon={<Plus size={16} />} 
-              onClick={() => toast.info("Coming Soon", "The team invitation feature is currently under development.")}
+              onClick={() => setOpenAddUser(true)}
             />
 
           </CardContent>
@@ -287,6 +295,12 @@ const Dashboard = () => {
       <AddTask
         open={open}
         setOpen={setOpen}
+        refresh={fetchDashboard}
+      />
+
+      <AddUser
+        open={openAddUser}
+        setOpen={setOpenAddUser}
         refresh={fetchDashboard}
       />
     </div>
