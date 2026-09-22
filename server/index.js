@@ -25,6 +25,7 @@ app.use(
       const allowedOrigins = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://taskmatie.netlify.app",
         "https://tasky-project-assignment.netlify.app",
         process.env.FRONTEND_URL,
       ];
@@ -32,6 +33,7 @@ app.use(
       const isAllowed = !origin ||
         allowedOrigins.includes(origin) ||
         origin.includes("vercel.app") ||
+        origin.includes("netlify.app") ||
         origin.includes("onrender.com");
 
       console.log(`CORS check for origin: ${origin} -> Allowed: ${isAllowed}`);

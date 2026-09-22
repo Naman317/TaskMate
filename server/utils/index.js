@@ -10,7 +10,8 @@ export const createJWT = (req, res, userId) => {
   const origin = req.get("origin") || "";
   const isProduction = process.env.NODE_ENV === "production" || 
                        !host.includes("localhost") || 
-                       origin.includes("vercel.app");
+                       origin.includes("vercel.app") ||
+                       origin.includes("netlify.app");
 
   console.log(`Setting cookie for host: ${host}, origin: ${origin}, isProduction: ${isProduction}`);
 

@@ -4,8 +4,7 @@ Tasky is a high-performance, scalable task management platform engineered using 
 
 ---
 ## Live 
-
-- Netlify + Render →https://taskmatie.netlify.app/
+- Netlify + Render → https://taskmatie.netlify.app/
 ## Core Features
 
 ### Advanced Role-Based Access Control (RBAC)
