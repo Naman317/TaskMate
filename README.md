@@ -5,8 +5,7 @@ Tasky is a high-performance, scalable task management platform engineered using 
 ---
 ## Live 
 
-- Vercel + Railway → https://tasky-one-iota.vercel.app/
-- Netlify + Render → https://tasky-project-assignment.netlify.app
+- Netlify + Render →https://taskmatie.netlify.app/
 ## Core Features
 
 ### Advanced Role-Based Access Control (RBAC)
