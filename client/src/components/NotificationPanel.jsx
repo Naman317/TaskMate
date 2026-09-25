@@ -21,28 +21,28 @@ const NotificationPanel = () => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await API.get("user/notifications", { withCredentials: true });
+      const res = await API.get("/user/notifications");
       setNotifications(res.data.notifications || []);
     } catch (err) {
-      console.error("Error fetching notifications:", err.message);
+      console.error("Error fetching notifications:", err?.message);
     }
   };
 
   const markAsRead = async (id) => {
     try {
-      await API.patch(`user/notification/read/${id}`, {}, { withCredentials: true });
+      await API.patch(`/user/notification/read/${id}`);
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
-      console.error("Failed to mark as read:", err.message);
+      console.error("Failed to mark as read:", err?.message);
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      await API.patch(`user/notification/read-all`, {}, { withCredentials: true });
+      await API.patch(`/user/notification/read-all`);
       setNotifications([]);
     } catch (err) {
-      console.error("Failed to mark all as read:", err.message);
+      console.error("Failed to mark all as read:", err?.message);
     }
   };
 
@@ -58,6 +58,8 @@ const NotificationPanel = () => {
 
   useEffect(() => {
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 45000); // 45s polling
+    return () => clearInterval(interval);
   }, []);
 
   return (
