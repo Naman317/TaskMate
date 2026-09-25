@@ -15,7 +15,11 @@ import { auth, googleProvider, signInWithPopup } from "../firebase";
 
 const AcceptInvite = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const rawToken = searchParams.get("token") || "";
+  // Extract clean 48-char hex token even if accidental duplicate URL strings are appended
+  const hexMatch = rawToken.match(/[a-f0-9]{48}/i);
+  const token = hexMatch ? hexMatch[0] : rawToken.trim();
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
@@ -43,7 +47,7 @@ const AcceptInvite = () => {
     const fetchInvitation = async () => {
       try {
         setLoading(true);
-        const res = await API.get(`/user/invitation/${token}`);
+        const res = await API.get(`/user/invitation/${encodeURIComponent(token)}`);
         setInvitation(res.data.invitation);
         setValue("email", res.data.invitation.email);
       } catch (err) {

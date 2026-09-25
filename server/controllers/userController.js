@@ -504,7 +504,11 @@ export const inviteMember = async (req, res) => {
 
 export const getInvitation = async (req, res) => {
   try {
-    const { token } = req.params;
+    let { token } = req.params;
+    if (token) {
+      const match = token.match(/[a-f0-9]{48}/i);
+      if (match) token = match[0];
+    }
     const invitation = await Invitation.findOne({ token }).populate("invitedBy", "name email");
 
     if (!invitation) {
@@ -538,7 +542,11 @@ export const getInvitation = async (req, res) => {
 
 export const acceptInvite = async (req, res) => {
   try {
-    const { token, name, password, email, avatar } = req.body;
+    let { token, name, password, email, avatar } = req.body;
+    if (token) {
+      const match = token.match(/[a-f0-9]{48}/i);
+      if (match) token = match[0];
+    }
     const invitation = await Invitation.findOne({ token });
 
     if (!invitation || invitation.status !== "pending") {
