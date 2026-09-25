@@ -118,20 +118,20 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         </Dialog.Title>
 
         {!isEditing && (
-          <div className="grid grid-cols-3 gap-1 border rounded-xl p-1 bg-muted">
+          <div className="grid grid-cols-3 gap-1.5 border rounded-xl p-1 bg-muted/60">
             <button
               type="button"
               onClick={() => {
                 setInviteMode("link");
                 setGeneratedLink("");
               }}
-              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "link"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <LinkIcon size={14} /> Invite Link
+              <LinkIcon size={14} /> Copy Link
             </button>
             <button
               type="button"
@@ -139,13 +139,13 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                 setInviteMode("gmail");
                 setGeneratedLink("");
               }}
-              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "gmail"
-                  ? "bg-background text-red-600 shadow-sm"
+                  ? "bg-red-500 text-white shadow-sm font-bold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Mail size={14} /> Gmail Invite
+              <Mail size={14} /> Gmail Compose
             </button>
             <button
               type="button"
@@ -153,7 +153,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                 setInviteMode("instant");
                 setGeneratedLink("");
               }}
-              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "instant"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -165,49 +165,59 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         )}
 
         {generatedLink ? (
-          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-4 animate-in">
-            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-              <Check size={18} /> Invitation Ready!
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Share this secure activation link with <strong>{invitedEmail}</strong>. They can join using Google or by setting a password:
-            </p>
-            <div className="flex items-center gap-2 bg-background p-2 border rounded-lg">
-              <input
-                type="text"
-                readOnly
-                value={generatedLink}
-                className="w-full text-xs bg-transparent outline-none text-foreground select-all font-mono"
-              />
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-md hover:bg-primary/90 flex items-center gap-1 shrink-0 transition-all cursor-pointer"
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copied ? "Copied!" : "Copy Link"}</span>
-              </button>
+          <div className="p-5 bg-card border rounded-2xl space-y-4 shadow-sm animate-in">
+            <div className="flex items-center gap-2 text-primary font-bold text-sm">
+              <Check size={18} className="text-emerald-500" />
+              <span>Invitation Created for {invitedEmail}</span>
             </div>
 
-            {/* Gmail & Mail Options */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-primary/10">
-              <a
-                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-                  invitedEmail
-                )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
-                  `Hello,\n\nYou have been invited to join the Tasky workspace as ${
-                    invitedTitle || "Team Member"
-                  }.\n\nClick the secure link below to accept your invitation and activate your account:\n${generatedLink}\n\nWelcome aboard!\n- Tasky Team`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-all shadow-sm"
-              >
-                <Mail size={14} />
-                <span>Send with Gmail</span>
-                <ExternalLink size={12} className="opacity-80" />
-              </a>
+            {inviteMode === "gmail" ? (
+              <div className="space-y-3 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl">
+                <p className="text-xs text-foreground/80 leading-relaxed">
+                  Click below to open <strong>Gmail Web</strong> with the invite message & activation link pre-filled:
+                </p>
+                <a
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+                    invitedEmail
+                  )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
+                    `Hello,\n\nYou have been invited to join the Tasky workspace as ${
+                      invitedTitle || "Team Member"
+                    }.\n\nClick the secure link below to accept your invitation and activate your account:\n${generatedLink}\n\nWelcome aboard!\n- Tasky Team`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Mail size={16} />
+                  <span>Open & Send in Gmail</span>
+                  <ExternalLink size={14} className="opacity-80" />
+                </a>
+              </div>
+            ) : null}
 
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                Shareable Activation Link
+              </label>
+              <div className="flex items-center gap-2 bg-muted/50 p-2 border rounded-xl">
+                <input
+                  type="text"
+                  readOnly
+                  value={generatedLink}
+                  className="w-full text-xs bg-transparent outline-none text-foreground select-all font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copied ? "Copied!" : "Copy Link"}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t">
               <a
                 href={`mailto:${encodeURIComponent(invitedEmail)}?subject=${encodeURIComponent(
                   "You're invited to join Tasky"
@@ -216,13 +226,11 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                     invitedTitle || "Team Member"
                   }.\n\nClick the link below to accept your invitation:\n${generatedLink}\n\nWelcome aboard!\n- Tasky Team`
                 )}`}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-input bg-background hover:bg-accent text-foreground text-xs font-medium rounded-lg transition-all"
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 hover:underline"
               >
-                <span>Email App</span>
+                <span>Or use Default Email App</span>
               </a>
-            </div>
 
-            <div className="flex justify-end pt-2">
               <Button
                 variant="outline"
                 size="sm"
