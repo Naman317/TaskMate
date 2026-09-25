@@ -2,7 +2,8 @@ import mongoose, { Schema } from "mongoose";
 
 const invitationSchema = new Schema(
   {
-    email: { type: String, required: true, lowercase: true, trim: true },
+    email: { type: String, default: "", lowercase: true, trim: true },
+    isGeneral: { type: Boolean, default: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     title: { type: String, default: "Team Member" },
     token: { type: String, required: true, unique: true },

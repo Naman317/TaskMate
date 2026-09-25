@@ -66,6 +66,7 @@ const AcceptInvite = () => {
       const res = await API.post("/user/accept-invite", {
         token,
         name: data.name,
+        email: data.email || invitation?.email,
         password: data.password,
       });
 
@@ -183,11 +184,19 @@ const AcceptInvite = () => {
 
         <form onSubmit={handleSubmit(handleManualAccept)} className="space-y-4">
           <Input
-            label="Your Assigned Email"
+            label="Email Address"
             type="email"
-            value={invitation?.email || ""}
-            disabled
-            className="bg-muted cursor-not-allowed"
+            placeholder="you@example.com"
+            disabled={!!invitation?.email}
+            className={invitation?.email ? "bg-muted cursor-not-allowed" : ""}
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "Invalid email address",
+              },
+            })}
+            error={errors.email?.message}
           />
 
           <Input

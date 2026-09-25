@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import ModalWrapper from "./ModalWrapper";
 import { Dialog } from "@headlessui/react";
@@ -6,16 +6,18 @@ import Textbox from "./Textbox";
 import Button from "./ui/Button";
 import API from "../assets/axios";
 import { toast } from "sonner";
-import { Copy, Check, Link as LinkIcon, UserPlus, Sparkles, Mail, ExternalLink } from "lucide-react";
+import { Copy, Check, Link as LinkIcon, UserPlus, Sparkles, Mail, ExternalLink, RefreshCw } from "lucide-react";
 
 const AddUser = ({ open, setOpen, userData, refresh }) => {
   const isEditing = !!userData;
   const [inviteMode, setInviteMode] = useState("link"); // 'link' | 'gmail' | 'instant'
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [generalLink, setGeneralLink] = useState("");
+  const [gmailLink, setGmailLink] = useState("");
   const [invitedEmail, setInvitedEmail] = useState("");
   const [invitedTitle, setInvitedTitle] = useState("");
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingGeneral, setIsGeneratingGeneral] = useState(false);
 
   const {
     register,
@@ -23,6 +25,30 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
     reset,
     formState: { errors },
   } = useForm({ defaultValues: userData ?? { role: "user" } });
+
+  // Auto-generate or fetch general link when modal opens in 'link' mode
+  const fetchGeneralLink = async () => {
+    try {
+      setIsGeneratingGeneral(true);
+      const res = await API.post("/user/invite-member", {
+        isGeneral: true,
+        role: "user",
+      });
+      const token = res.data.token;
+      const origin = window.location.origin;
+      setGeneralLink(`${origin}/accept-invite?token=${token}`);
+    } catch (err) {
+      console.error("Failed to generate general link", err);
+    } finally {
+      setIsGeneratingGeneral(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && !isEditing && inviteMode === "link" && !generalLink) {
+      fetchGeneralLink();
+    }
+  }, [open, inviteMode, isEditing]);
 
   const handleOnSubmit = async (data) => {
     try {
@@ -33,8 +59,8 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         toast.success("User updated successfully");
         setOpen(false);
         refresh && refresh();
-      } else if (inviteMode === "link" || inviteMode === "gmail") {
-        // Generate Tokenized Invite Link
+      } else if (inviteMode === "gmail") {
+        // Generate Tokenized Invite Link for specific email
         const res = await API.post("/user/invite-member", {
           email: data.email,
           title: data.title,
@@ -46,22 +72,18 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         const fullLink = `${origin}/accept-invite?token=${token}`;
         setInvitedEmail(data.email);
         setInvitedTitle(data.title);
-        setGeneratedLink(fullLink);
+        setGmailLink(fullLink);
 
-        if (inviteMode === "gmail") {
-          // Open Gmail Compose automatically in a new window/tab
-          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-            data.email
-          )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
-            `Hello,\n\nYou have been invited to join the Tasky workspace as ${
-              data.title || "Team Member"
-            }.\n\nClick the secure link below to accept your invitation and activate your account:\n${fullLink}\n\nWelcome aboard!\n- Tasky Team`
-          )}`;
-          window.open(gmailUrl, "_blank", "noopener,noreferrer");
-          toast.success("Invitation generated & Gmail composer opened!");
-        } else {
-          toast.success("Invitation link generated successfully!");
-        }
+        // Open Gmail Compose automatically in a new window/tab
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+          data.email
+        )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
+          `Hello,\n\nYou have been invited to join the Tasky workspace as ${
+            data.title || "Team Member"
+          }.\n\nClick the secure link below to accept your invitation and activate your account:\n${fullLink}\n\nWelcome aboard!\n- Tasky Team`
+        )}`;
+        window.open(gmailUrl, "_blank", "noopener,noreferrer");
+        toast.success("Invitation generated & Gmail composer opened!");
         refresh && refresh();
       } else {
         // Instant Direct Add
@@ -86,9 +108,10 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
     }
   };
 
-  const handleCopyLink = () => {
-    if (generatedLink) {
-      navigator.clipboard.writeText(generatedLink);
+  const handleCopyLink = (linkToCopy) => {
+    const link = linkToCopy || generalLink || gmailLink;
+    if (link) {
+      navigator.clipboard.writeText(link);
       setCopied(true);
       toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2500);
@@ -97,7 +120,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
 
   const handleClose = () => {
     setOpen(false);
-    setGeneratedLink("");
+    setGmailLink("");
     setCopied(false);
     reset();
   };
@@ -123,7 +146,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
               type="button"
               onClick={() => {
                 setInviteMode("link");
-                setGeneratedLink("");
+                setGmailLink("");
               }}
               className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "link"
@@ -137,7 +160,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
               type="button"
               onClick={() => {
                 setInviteMode("gmail");
-                setGeneratedLink("");
+                setGmailLink("");
               }}
               className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "gmail"
@@ -151,7 +174,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
               type="button"
               onClick={() => {
                 setInviteMode("instant");
-                setGeneratedLink("");
+                setGmailLink("");
               }}
               className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 inviteMode === "instant"
@@ -164,36 +187,89 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
           </div>
         )}
 
-        {generatedLink ? (
+        {/* 1. COPY LINK MODE (Instant Workspace Link - NO EMAIL/ROLE FORM NEEDED) */}
+        {!isEditing && inviteMode === "link" && (
+          <div className="space-y-4 animate-in">
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <LinkIcon size={14} className="text-primary" /> Workspace Invite Link
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchGeneralLink}
+                  disabled={isGeneratingGeneral}
+                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-all cursor-pointer"
+                  title="Generate new link"
+                >
+                  <RefreshCw size={12} className={isGeneratingGeneral ? "animate-spin" : ""} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Anyone with this link can join your workspace. They can sign up with <strong>Google</strong> or create a password.
+              </p>
+
+              <div className="flex items-center gap-2 bg-background p-2 border rounded-xl">
+                <input
+                  type="text"
+                  readOnly
+                  value={generalLink || "Generating invite link..."}
+                  className="w-full text-xs bg-transparent outline-none text-foreground select-all font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCopyLink(generalLink)}
+                  disabled={!generalLink || isGeneratingGeneral}
+                  className="px-3.5 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copied ? "Copied!" : "Copy Link"}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                label="Close"
+                onClick={handleClose}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 2. GMAIL INVITE MODE - RESULT */}
+        {!isEditing && inviteMode === "gmail" && gmailLink ? (
           <div className="p-5 bg-card border rounded-2xl space-y-4 shadow-sm animate-in">
             <div className="flex items-center gap-2 text-primary font-bold text-sm">
               <Check size={18} className="text-emerald-500" />
               <span>Invitation Created for {invitedEmail}</span>
             </div>
 
-            {inviteMode === "gmail" ? (
-              <div className="space-y-3 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl">
-                <p className="text-xs text-foreground/80 leading-relaxed">
-                  Click below to open <strong>Gmail Web</strong> with the invite message & activation link pre-filled:
-                </p>
-                <a
-                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-                    invitedEmail
-                  )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
-                    `Hello,\n\nYou have been invited to join the Tasky workspace as ${
-                      invitedTitle || "Team Member"
-                    }.\n\nClick the secure link below to accept your invitation and activate your account:\n${generatedLink}\n\nWelcome aboard!\n- Tasky Team`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
-                >
-                  <Mail size={16} />
-                  <span>Open & Send in Gmail</span>
-                  <ExternalLink size={14} className="opacity-80" />
-                </a>
-              </div>
-            ) : null}
+            <div className="space-y-3 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 p-4 rounded-xl">
+              <p className="text-xs text-foreground/80 leading-relaxed">
+                Click below to open <strong>Gmail Web</strong> with the invite message & activation link pre-filled:
+              </p>
+              <a
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+                  invitedEmail
+                )}&su=${encodeURIComponent("You're invited to join Tasky")}&body=${encodeURIComponent(
+                  `Hello,\n\nYou have been invited to join the Tasky workspace as ${
+                    invitedTitle || "Team Member"
+                  }.\n\nClick the secure link below to accept your invitation and activate your account:\n${gmailLink}\n\nWelcome aboard!\n- Tasky Team`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all"
+              >
+                <Mail size={16} />
+                <span>Open & Send in Gmail</span>
+                <ExternalLink size={14} className="opacity-80" />
+              </a>
+            </div>
 
             <div>
               <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
@@ -203,12 +279,12 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                 <input
                   type="text"
                   readOnly
-                  value={generatedLink}
+                  value={gmailLink}
                   className="w-full text-xs bg-transparent outline-none text-foreground select-all font-mono"
                 />
                 <button
                   type="button"
-                  onClick={handleCopyLink}
+                  onClick={() => handleCopyLink(gmailLink)}
                   className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
                 >
                   {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -224,7 +300,7 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                 )}&body=${encodeURIComponent(
                   `Hello,\n\nYou have been invited to join the Tasky workspace as ${
                     invitedTitle || "Team Member"
-                  }.\n\nClick the link below to accept your invitation:\n${generatedLink}\n\nWelcome aboard!\n- Tasky Team`
+                  }.\n\nClick the link below to accept your invitation:\n${gmailLink}\n\nWelcome aboard!\n- Tasky Team`
                 )}`}
                 className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 hover:underline"
               >
@@ -239,7 +315,10 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
               />
             </div>
           </div>
-        ) : (
+        ) : null}
+
+        {/* 3. GMAIL & INSTANT ADD & EDIT USER FORM */}
+        {(isEditing || (inviteMode === "gmail" && !gmailLink) || inviteMode === "instant") && (
           <form onSubmit={handleSubmit(handleOnSubmit)} className="space-y-4">
             <div className="flex flex-col gap-4">
               {(isEditing || inviteMode === "instant") && (
@@ -319,14 +398,12 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
                 label={
                   isEditing
                     ? "Update User"
-                    : inviteMode === "link"
-                    ? "Generate Invite Link"
                     : inviteMode === "gmail"
                     ? "Send with Gmail"
                     : "Add Team Member"
                 }
                 isLoading={isLoading}
-                variant={inviteMode === "gmail" ? "primary" : "primary"}
+                variant="primary"
                 className={inviteMode === "gmail" ? "px-6 bg-red-600 hover:bg-red-700 text-white" : "px-6"}
               />
 
@@ -346,4 +423,5 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
 };
 
 export default AddUser;
+
 

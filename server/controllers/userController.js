@@ -426,19 +426,16 @@ export const resetPassword = async (req, res) => {
 
 export const inviteMember = async (req, res) => {
   try {
-    const { email, role, title, password } = req.body;
-    if (!email) {
-      return res.status(400).json({ status: false, message: "Email is required." });
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
-    const existingUser = await User.findOne({ email: cleanEmail });
-    if (existingUser) {
-      return res.status(400).json({ status: false, message: "A user with this email already exists." });
-    }
+    const { email, role, title, password, isGeneral } = req.body;
 
     // If password was provided (Instant Add mode)
-    if (password) {
+    if (password && email) {
+      const cleanEmail = email.toLowerCase().trim();
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser) {
+        return res.status(400).json({ status: false, message: "A user with this email already exists." });
+      }
+
       const newUser = new User({
         name: cleanEmail.split("@")[0],
         email: cleanEmail,
@@ -455,12 +452,21 @@ export const inviteMember = async (req, res) => {
       });
     }
 
-    // Otherwise generate tokenized invitation
+    // Tokenized invitation (General link OR specific email)
     const token = crypto.randomBytes(24).toString("hex");
-    await Invitation.deleteMany({ email: cleanEmail });
+    const cleanEmail = email ? email.toLowerCase().trim() : "";
+
+    if (cleanEmail) {
+      const existingUser = await User.findOne({ email: cleanEmail });
+      if (existingUser) {
+        return res.status(400).json({ status: false, message: "A user with this email already exists." });
+      }
+      await Invitation.deleteMany({ email: cleanEmail });
+    }
 
     const invitation = new Invitation({
       email: cleanEmail,
+      isGeneral: !cleanEmail || !!isGeneral,
       role: role === "admin" ? "admin" : "user",
       title: title || "Team Member",
       token,
@@ -470,28 +476,29 @@ export const inviteMember = async (req, res) => {
 
     await invitation.save();
 
-    // Construct invite URL for email
+    // Construct invite URL
     const frontendUrl = process.env.FRONTEND_URL || "https://taskmatie.netlify.app";
     const inviteUrl = `${frontendUrl.replace(/\/+$/, "")}/accept-invite?token=${token}`;
 
-    const inviter = req.user?.userId ? await User.findById(req.user.userId) : null;
-
-    // Dispatch real invitation email in background
-    await sendEmail({
-      to: cleanEmail,
-      subject: "You're invited to join Tasky",
-      html: getTeamInvitationEmailTemplate({
-        inviteUrl,
-        inviterName: inviter?.name || "Team Admin",
-        role: role === "admin" ? "Admin" : "Team Member",
-        title: title || "Team Member",
-        email: cleanEmail,
-      }),
-    });
+    // Dispatch email if specific email was provided
+    if (cleanEmail) {
+      const inviter = req.user?.userId ? await User.findById(req.user.userId) : null;
+      await sendEmail({
+        to: cleanEmail,
+        subject: "You're invited to join Tasky",
+        html: getTeamInvitationEmailTemplate({
+          inviteUrl,
+          inviterName: inviter?.name || "Team Admin",
+          role: role === "admin" ? "Admin" : "Team Member",
+          title: title || "Team Member",
+          email: cleanEmail,
+        }),
+      });
+    }
 
     res.status(201).json({
       status: true,
-      message: `Invitation created for ${cleanEmail}!`,
+      message: cleanEmail ? `Invitation sent to ${cleanEmail}!` : "Workspace invitation link generated!",
       token,
       inviteUrl,
       invitation,
@@ -515,7 +522,7 @@ export const getInvitation = async (req, res) => {
       return res.status(404).json({ status: false, message: "Invalid or expired invitation link." });
     }
 
-    if (invitation.status === "accepted") {
+    if (invitation.status === "accepted" && !invitation.isGeneral) {
       return res.status(400).json({ status: false, message: "This invitation has already been accepted." });
     }
 
@@ -528,7 +535,8 @@ export const getInvitation = async (req, res) => {
     res.status(200).json({
       status: true,
       invitation: {
-        email: invitation.email,
+        email: invitation.email || "",
+        isGeneral: invitation.isGeneral || !invitation.email,
         role: invitation.role,
         title: invitation.title,
         invitedBy: invitation.invitedBy?.name || "Team Admin",
@@ -549,7 +557,7 @@ export const acceptInvite = async (req, res) => {
     }
     const invitation = await Invitation.findOne({ token });
 
-    if (!invitation || invitation.status !== "pending") {
+    if (!invitation || (invitation.status !== "pending" && !invitation.isGeneral)) {
       return res.status(400).json({ status: false, message: "Invalid or inactive invitation." });
     }
 
@@ -559,23 +567,30 @@ export const acceptInvite = async (req, res) => {
       return res.status(400).json({ status: false, message: "This invitation has expired." });
     }
 
+    const userEmail = (invitation.email || email || "").toLowerCase().trim();
+    if (!userEmail) {
+      return res.status(400).json({ status: false, message: "Email is required to join." });
+    }
+
     // Check if user exists
-    let user = await User.findOne({ email: invitation.email });
+    let user = await User.findOne({ email: userEmail });
     if (!user) {
       user = new User({
-        name: name || invitation.email.split("@")[0],
-        email: invitation.email,
+        name: name || userEmail.split("@")[0],
+        email: userEmail,
         password: password || "password123",
         avatar: avatar || "",
-        title: invitation.title,
-        role: invitation.role,
-        isAdmin: invitation.role === "admin" || invitation.email === "admin@gmail.com",
+        title: invitation.title || "Team Member",
+        role: invitation.role || "user",
+        isAdmin: invitation.role === "admin" || userEmail === "admin@gmail.com",
       });
       await user.save();
     }
 
-    invitation.status = "accepted";
-    await invitation.save();
+    if (!invitation.isGeneral) {
+      invitation.status = "accepted";
+      await invitation.save();
+    }
 
     const authToken = createJWT(req, res, user._id);
     user.password = undefined;
