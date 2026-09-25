@@ -367,7 +367,11 @@ export const forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Construct reset URL for email
-    const frontendUrl = process.env.FRONTEND_URL || "https://taskmatie.netlify.app";
+    let frontendUrl = process.env.FRONTEND_URL || "https://tasky-one-iota.vercel.app";
+    frontendUrl = frontendUrl.trim();
+    if (!frontendUrl.startsWith("http://") && !frontendUrl.startsWith("https://")) {
+      frontendUrl = `https://${frontendUrl}`;
+    }
     const resetUrl = `${frontendUrl.replace(/\/+$/, "")}/forgot-password?token=${resetToken}&email=${encodeURIComponent(cleanEmail)}`;
 
     // Dispatch real email in background
@@ -477,7 +481,11 @@ export const inviteMember = async (req, res) => {
     await invitation.save();
 
     // Construct invite URL
-    const frontendUrl = process.env.FRONTEND_URL || "https://taskmatie.netlify.app";
+    let frontendUrl = process.env.FRONTEND_URL || "https://tasky-one-iota.vercel.app";
+    frontendUrl = frontendUrl.trim();
+    if (!frontendUrl.startsWith("http://") && !frontendUrl.startsWith("https://")) {
+      frontendUrl = `https://${frontendUrl}`;
+    }
     const inviteUrl = `${frontendUrl.replace(/\/+$/, "")}/accept-invite?token=${token}`;
 
     // Dispatch email if specific email was provided

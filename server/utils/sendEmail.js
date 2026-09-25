@@ -7,24 +7,24 @@ export const sendEmail = async ({ to, subject, html, text }) => {
 
     if (!user || !pass) {
       console.log(`[Email Service - Simulated] To: ${to} | Subject: ${subject}`);
-      console.log(`[Email Service - Note] EMAIL_USER / EMAIL_PASS not configured in .env. Email was logged rather than sent.`);
+      console.log(`[Email Service - Note] EMAIL_USER / EMAIL_PASS not configured. Email logged rather than sent.`);
       return { success: true, simulated: true };
     }
 
+    const cleanUser = user.trim();
+    const cleanPass = pass.trim().replace(/\s+/g, "");
+
     const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || "gmail",
-      host: process.env.EMAIL_HOST || "smtp.gmail.com",
-      port: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT) : 465,
-      secure: process.env.EMAIL_SECURE === "false" ? false : true,
+      service: "gmail",
       auth: {
-        user,
-        pass,
+        user: cleanUser,
+        pass: cleanPass,
       },
     });
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || `"Tasky Team" <${user}>`,
-      to,
+      from: process.env.EMAIL_FROM || `"Tasky Team" <${cleanUser}>`,
+      to: to.trim(),
       subject,
       text: text || "",
       html,

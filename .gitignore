@@ -25,7 +25,15 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+client/dist/
+
 # Certificates & Keys
 *.pem
 *.key
 *.cert
+
