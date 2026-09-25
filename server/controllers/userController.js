@@ -83,11 +83,23 @@ export const getNotificationsList = async (req, res) => {
   try {
     const { userId } = req.user;
 
-    const notifications = await Notice.find({ team: userId })
-      .populate("task", "title") // Optional: populate task title
+    const rawNotifications = await Notice.find({ team: userId })
+      .populate("task", "title")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ status: true, notifications });
+    const notifications = rawNotifications.map((n) => {
+      const isReadByUser = n.isRead?.some(
+        (id) => id.toString() === userId.toString()
+      );
+      return {
+        ...n.toObject(),
+        hasRead: isReadByUser,
+      };
+    });
+
+    const unreadCount = notifications.filter((n) => !n.hasRead).length;
+
+    res.status(200).json({ status: true, notifications, unreadCount });
   } catch (error) {
     console.error("Error fetching notifications:", error);
     res.status(500).json({ status: false, message: "Error fetching notifications" });
@@ -99,37 +111,30 @@ export const markNotiAsRead = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const notice = await Notice.findById(id);
+    const notice = await Notice.findByIdAndUpdate(
+      id,
+      { $addToSet: { isRead: userId } },
+      { new: true }
+    );
 
     if (!notice) {
       return res.status(404).json({ status: false, message: "Notification not found" });
     }
 
-    if (!notice.isRead.includes(userId)) {
-      notice.isRead.push(userId);
-      await notice.save();
-    }
-
-    res.status(200).json({ status: true, message: "Marked as read" });
+    res.status(200).json({ status: true, message: "Marked as read", notice });
   } catch (error) {
-    console.error(error);
+    console.error("Failed to mark notice as read:", error);
     res.status(400).json({ status: false, message: "Failed to mark as read" });
   }
 };
-
 
 export const markAllNotiRead = async (req, res) => {
   try {
     const { userId } = req.user;
 
     await Notice.updateMany(
-      {
-        team: userId,
-        isRead: { $ne: userId }, // $ne = not equal, safer than $nin for scalar comparison
-      },
-      {
-        $addToSet: { isRead: userId }, // avoids duplicates automatically
-      }
+      { team: userId },
+      { $addToSet: { isRead: userId } }
     );
 
     res.status(200).json({ status: true, message: "All notifications marked as read" });
