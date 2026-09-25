@@ -1,22 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../assets/axios";
 import { motion } from "framer-motion";
-import { CheckCircle2, LayoutDashboard, Lock } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { Card, CardContent } from "../components/ui/Card";
 import { setUser } from "../redux/slices/authSlice";
 import useToast from "../hooks/useToast";
+import { auth, googleProvider, signInWithPopup } from "../firebase";
 
 const Login = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const toast = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
     register,
@@ -32,9 +34,7 @@ const Login = () => {
     toast.promise(loginPromise, {
       loading: "Signing you in...",
       success: (res) => {
-        console.log("LOGIN SUCCESS RAW DATA:", res.data);
         const { user, token } = res.data;
-        console.log("DESTRUCTURED TOKEN:", !!token);
         dispatch(setUser({ user, token }));
         localStorage.setItem("user", JSON.stringify(user));
         navigate("/dashboard");
@@ -44,10 +44,35 @@ const Login = () => {
     });
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+
+      const res = await API.post("user/google-auth", {
+        name: googleUser.displayName || googleUser.email.split("@")[0],
+        email: googleUser.email,
+        avatar: googleUser.photoURL || "",
+        googleId: googleUser.uid,
+      }, { withCredentials: true });
+
+      const { user: userData, token } = res.data;
+      dispatch(setUser({ user: userData, token }));
+      localStorage.setItem("user", JSON.stringify(userData));
+      navigate("/dashboard");
+      toast.success("Welcome back!", `Signed in as ${userData.email}`);
+    } catch (err) {
+      console.error("Google login error:", err);
+      toast.error(err?.response?.data?.message || err?.message || "Google sign in failed.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user) navigate("/dashboard");
   }, [user, navigate]);
-
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -109,6 +134,25 @@ const Login = () => {
           <div className="mb-10 text-center lg:text-left">
             <h2 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
             <p className="text-muted-foreground">Please enter your details to sign in.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-input rounded-lg bg-card hover:bg-accent text-foreground font-medium transition-all shadow-sm mb-6 disabled:opacity-50"
+          >
+            <FcGoogle size={20} />
+            <span>{googleLoading ? "Signing in..." : "Continue with Google"}</span>
+          </button>
+
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-input"></div>
+            </div>
+            <span className="relative px-4 bg-background text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+              Or with email
+            </span>
           </div>
 
           <form onSubmit={handleSubmit(submitHandler)} className="space-y-6">

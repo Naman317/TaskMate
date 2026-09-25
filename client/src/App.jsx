@@ -8,6 +8,7 @@ import { markRehydrated } from "./redux/slices/authSlice";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import AcceptInvite from "./pages/AcceptInvite";
 import Layout from "./Layout";
 
 import Dashboard from "./pages/dashboard";
@@ -31,6 +32,7 @@ function App() {
         <Route path='/' element={<Login />} />
         <Route path='/register' element={<Register />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/accept-invite' element={<AcceptInvite />} />
 
 
         {/* Protected Routes */}

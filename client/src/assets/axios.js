@@ -2,8 +2,8 @@ import axios from "axios";
 import store from "../redux/store";
 import { logoutUser } from "../redux/slices/authSlice";
 
-const RAW_URI = "https://tasky-production-render.onrender.com";
-const cleanURI = RAW_URI.replace(/\/+$/, "");
+const RAW_URI = import.meta.env.VITE_APP_BASE_URL || "https://tasky-production-render.onrender.com";
+const cleanURI = (RAW_URI || "").replace(/\/+$/, "");
 const API_URI = (cleanURI.endsWith("/api") ? cleanURI : `${cleanURI}/api`) + "/";
 
 const API = axios.create({

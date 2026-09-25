@@ -1,20 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../assets/axios";
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { setUser } from "../redux/slices/authSlice";
 import useToast from "../hooks/useToast";
+import { auth, googleProvider, signInWithPopup } from "../firebase";
 
 const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
     register,
@@ -41,6 +44,31 @@ const Register = () => {
     });
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+
+      const res = await API.post("user/google-auth", {
+        name: googleUser.displayName || googleUser.email.split("@")[0],
+        email: googleUser.email,
+        avatar: googleUser.photoURL || "",
+        googleId: googleUser.uid,
+      }, { withCredentials: true });
+
+      const { user: userData, token } = res.data;
+      dispatch(setUser({ user: userData, token }));
+      localStorage.setItem("user", JSON.stringify(userData));
+      navigate("/dashboard");
+      toast.success("Account ready!", `Signed in as ${userData.email}`);
+    } catch (err) {
+      console.error("Google register error:", err);
+      toast.error(err?.response?.data?.message || err?.message || "Google sign in failed.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -68,15 +96,15 @@ const Register = () => {
               Join the future of <span className="text-white/80">productivity.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 mb-10 leading-relaxed">
-              Experience the most intuitive way to manage your work, automate your workflows, and grow your team.
+              Experience the most intuitive way to manage your work, collaborate seamlessly, and grow your team.
             </p>
 
             <div className="space-y-4">
               {[
-                "14-day free trial",
-                "Unlimited projects & tasks",
-                "Integrated team chat",
-                "Custom reporting dashboards",
+                "Real-time Kanban & List Views",
+                "Voice-Controlled Task Management",
+                "Role-Based Access Control",
+                "Comprehensive Analytics & Tracking",
               ].map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <CheckCircle2 className="text-white/60" size={18} />
@@ -107,6 +135,25 @@ const Register = () => {
           <div className="mb-10 text-center lg:text-left">
             <h2 className="text-3xl font-bold text-foreground mb-2">Create Account</h2>
             <p className="text-muted-foreground">Start your journey with Tasky today.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-input rounded-lg bg-card hover:bg-accent text-foreground font-medium transition-all shadow-sm mb-6 disabled:opacity-50"
+          >
+            <FcGoogle size={20} />
+            <span>{googleLoading ? "Connecting..." : "Sign up with Google"}</span>
+          </button>
+
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-input"></div>
+            </div>
+            <span className="relative px-4 bg-background text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+              Or with email
+            </span>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,8 +1,14 @@
+import crypto from "crypto";
 import { response } from "express";
 import Notice from "../models/notification.js";
-
 import User from "../models/user.js";
+import Invitation from "../models/invitation.js";
 import { createJWT } from "../utils/index.js";
+import {
+  sendEmail,
+  getPasswordResetEmailTemplate,
+  getTeamInvitationEmailTemplate,
+} from "../utils/sendEmail.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -296,4 +302,286 @@ export const deleteUserProfile = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { email, name, avatar } = req.body;
+    if (!email) {
+      return res.status(400).json({ status: false, message: "Email is required" });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      const isSuperAdmin = cleanEmail === "admin@gmail.com";
+      user = new User({
+        name: name || cleanEmail.split("@")[0],
+        email: cleanEmail,
+        avatar: avatar || "",
+        authProvider: "google",
+        role: isSuperAdmin ? "admin" : "user",
+        isAdmin: isSuperAdmin,
+      });
+      await user.save();
+    } else {
+      if (avatar && !user.avatar) {
+        user.avatar = avatar;
+        await user.save();
+      }
+    }
+
+    const token = createJWT(req, res, user._id);
+    user.password = undefined;
+
+    if (cleanEmail === "admin@gmail.com") {
+      user.isAdmin = true;
+      user.role = "admin";
+    }
+
+    res.status(200).json({ status: true, user, token });
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ status: false, message: "Email address is required." });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: "No account found with this email." });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    await user.save({ validateBeforeSave: false });
+
+    // Construct reset URL for email
+    const frontendUrl = process.env.FRONTEND_URL || "https://taskmatie.netlify.app";
+    const resetUrl = `${frontendUrl.replace(/\/+$/, "")}/forgot-password?token=${resetToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+    // Dispatch real email in background
+    await sendEmail({
+      to: cleanEmail,
+      subject: "Tasky - Password Reset Request",
+      html: getPasswordResetEmailTemplate({ resetUrl, userEmail: cleanEmail }),
+    });
+
+    res.status(200).json({
+      status: true,
+      message: "Password reset link generated and sent successfully.",
+      resetToken,
+      email: cleanEmail,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, email, password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ status: false, message: "Password must be at least 6 characters long." });
+    }
+
+    let user;
+    if (token) {
+      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+      user = await User.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: { $gt: Date.now() },
+      });
+    } else if (email) {
+      user = await User.findOne({ email: email.toLowerCase().trim() });
+    }
+
+    if (!user) {
+      return res.status(400).json({ status: false, message: "Invalid or expired password reset request." });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ status: true, message: "Password reset successful! You can now log in with your new password." });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const inviteMember = async (req, res) => {
+  try {
+    const { email, role, title, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ status: false, message: "Email is required." });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      return res.status(400).json({ status: false, message: "A user with this email already exists." });
+    }
+
+    // If password was provided (Instant Add mode)
+    if (password) {
+      const newUser = new User({
+        name: cleanEmail.split("@")[0],
+        email: cleanEmail,
+        password: password,
+        title: title || "Team Member",
+        role: role === "admin" ? "admin" : "user",
+        isAdmin: role === "admin" || cleanEmail === "admin@gmail.com",
+      });
+      await newUser.save();
+      return res.status(201).json({
+        status: true,
+        message: `Member ${cleanEmail} created successfully!`,
+        user: newUser,
+      });
+    }
+
+    // Otherwise generate tokenized invitation
+    const token = crypto.randomBytes(24).toString("hex");
+    await Invitation.deleteMany({ email: cleanEmail });
+
+    const invitation = new Invitation({
+      email: cleanEmail,
+      role: role === "admin" ? "admin" : "user",
+      title: title || "Team Member",
+      token,
+      invitedBy: req.user?.userId,
+      expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    });
+
+    await invitation.save();
+
+    // Construct invite URL for email
+    const frontendUrl = process.env.FRONTEND_URL || "https://taskmatie.netlify.app";
+    const inviteUrl = `${frontendUrl.replace(/\/+$/, "")}/accept-invite?token=${token}`;
+
+    const inviter = req.user?.userId ? await User.findById(req.user.userId) : null;
+
+    // Dispatch real invitation email in background
+    await sendEmail({
+      to: cleanEmail,
+      subject: "You're invited to join Tasky",
+      html: getTeamInvitationEmailTemplate({
+        inviteUrl,
+        inviterName: inviter?.name || "Team Admin",
+        role: role === "admin" ? "Admin" : "Team Member",
+        title: title || "Team Member",
+        email: cleanEmail,
+      }),
+    });
+
+    res.status(201).json({
+      status: true,
+      message: `Invitation created for ${cleanEmail}!`,
+      token,
+      inviteUrl,
+      invitation,
+    });
+  } catch (error) {
+    console.error("Invite member error:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const getInvitation = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const invitation = await Invitation.findOne({ token }).populate("invitedBy", "name email");
+
+    if (!invitation) {
+      return res.status(404).json({ status: false, message: "Invalid or expired invitation link." });
+    }
+
+    if (invitation.status === "accepted") {
+      return res.status(400).json({ status: false, message: "This invitation has already been accepted." });
+    }
+
+    if (new Date() > new Date(invitation.expiresAt)) {
+      invitation.status = "expired";
+      await invitation.save();
+      return res.status(400).json({ status: false, message: "This invitation link has expired." });
+    }
+
+    res.status(200).json({
+      status: true,
+      invitation: {
+        email: invitation.email,
+        role: invitation.role,
+        title: invitation.title,
+        invitedBy: invitation.invitedBy?.name || "Team Admin",
+      },
+    });
+  } catch (error) {
+    console.error("Get invitation error:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+export const acceptInvite = async (req, res) => {
+  try {
+    const { token, name, password, email, avatar } = req.body;
+    const invitation = await Invitation.findOne({ token });
+
+    if (!invitation || invitation.status !== "pending") {
+      return res.status(400).json({ status: false, message: "Invalid or inactive invitation." });
+    }
+
+    if (new Date() > new Date(invitation.expiresAt)) {
+      invitation.status = "expired";
+      await invitation.save();
+      return res.status(400).json({ status: false, message: "This invitation has expired." });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email: invitation.email });
+    if (!user) {
+      user = new User({
+        name: name || invitation.email.split("@")[0],
+        email: invitation.email,
+        password: password || "password123",
+        avatar: avatar || "",
+        title: invitation.title,
+        role: invitation.role,
+        isAdmin: invitation.role === "admin" || invitation.email === "admin@gmail.com",
+      });
+      await user.save();
+    }
+
+    invitation.status = "accepted";
+    await invitation.save();
+
+    const authToken = createJWT(req, res, user._id);
+    user.password = undefined;
+
+    res.status(201).json({
+      status: true,
+      message: "Account activated successfully!",
+      user,
+      token: authToken,
+    });
+  } catch (error) {
+    console.error("Accept invite error:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
 
