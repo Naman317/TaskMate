@@ -6,13 +6,14 @@ import { Dialog } from "@headlessui/react";
 import Textbox from "./Textbox";
 import Button from "./ui/Button";
 import API from "../assets/axios";
-import { toast } from "sonner";
 import { Copy, Check, Link as LinkIcon, UserPlus, Sparkles } from "lucide-react";
 
 const AddUser = ({ open, setOpen, userData, refresh }) => {
   const isEditing = !!userData;
   const [inviteMode, setInviteMode] = useState("link"); // 'link' | 'instant'
   const [generatedLink, setGeneratedLink] = useState("");
+  const [invitedEmail, setInvitedEmail] = useState("");
+  const [invitedTitle, setInvitedTitle] = useState("");
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,8 +44,10 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         const token = res.data.token;
         const origin = window.location.origin;
         const fullLink = `${origin}/accept-invite?token=${token}`;
+        setInvitedEmail(data.email);
+        setInvitedTitle(data.title);
         setGeneratedLink(fullLink);
-        toast.success("Invitation generated!", "Copy the link below to share with your team member.");
+        toast.success("Invitation generated!", "You can copy the link or send directly via Gmail.");
         refresh && refresh();
       } else {
         // Instant Direct Add
@@ -130,27 +133,28 @@ const AddUser = ({ open, setOpen, userData, refresh }) => {
         {generatedLink ? (
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-4 animate-in">
             <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-              <Check size={18} /> Invitation Ready!
+              <Check size={18} /> Invitation Link Ready!
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this secure activation link with the member. They can join using Google or by setting a password:
+              Share this secure activation link with your team member. They can join using Google or by setting a password:
             </p>
             <div className="flex items-center gap-2 bg-background p-2 border rounded-lg">
               <input
                 type="text"
                 readOnly
                 value={generatedLink}
-                className="w-full text-xs bg-transparent outline-none text-foreground select-all"
+                className="w-full text-xs bg-transparent outline-none text-foreground select-all font-mono"
               />
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-md hover:bg-primary/90 flex items-center gap-1 shrink-0 transition-all"
+                className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-md hover:bg-primary/90 flex items-center gap-1 shrink-0 transition-all cursor-pointer"
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copied ? "Copied!" : "Copy"}</span>
+                <span>{copied ? "Copied!" : "Copy Link"}</span>
               </button>
             </div>
+
             <div className="flex justify-end pt-2">
               <Button
                 variant="outline"
