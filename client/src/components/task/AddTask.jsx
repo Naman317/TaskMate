@@ -61,12 +61,10 @@ const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
     if (prefillData) {
       reset({
         title: prefillData.title || "",
-        date: prefillData.date || "", // Set prefilled date
+        date: prefillData.date || new Date().toISOString().split("T")[0],
       });
 
       setPriority(prefillData.priority?.toUpperCase() || "MEDIUM");
-
-      // Assign to self for voice commands
       setTeam([user]);
     }
   }, [prefillData, isAdmin, user, reset]);

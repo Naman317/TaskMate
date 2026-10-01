@@ -56,6 +56,14 @@ const Tasks = () => {
 
 
 
+  const findTaskByTitle = (title) => {
+    const query = title.toLowerCase().trim();
+    return (
+      data?.tasks?.find((t) => t.title.toLowerCase() === query) ||
+      data?.tasks?.find((t) => t.title.toLowerCase().includes(query))
+    );
+  };
+
   const handleVoiceCommand = async (command) => {
     const lowerCommand = command.toLowerCase().trim();
 
@@ -80,6 +88,10 @@ const Tasks = () => {
       navigate("/trashed");
       return;
     }
+    if (lowerCommand.includes("go to team") || lowerCommand.includes("open team") || lowerCommand.includes("view team")) {
+      navigate("/team");
+      return;
+    }
 
     // Searching
     if (lowerCommand.startsWith("search for ")) {
@@ -93,8 +105,6 @@ const Tasks = () => {
       toast.success("Search cleared");
       return;
     }
-
-
 
     // Stage Movement
     if (lowerCommand.startsWith("move ") && lowerCommand.includes(" to ")) {
@@ -110,18 +120,18 @@ const Tasks = () => {
           return;
         }
 
-        const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
-
         if (!isAdmin) {
           toast.error("Only admins can move tasks to different stages.");
           return;
         }
 
+        const taskToMove = findTaskByTitle(titleToFind);
+
         if (taskToMove) {
           try {
             await updateTask({
               id: taskToMove._id,
-              data: { ...taskToMove, stage: targetStage, team: taskToMove.team?.map(t => t._id || t) }
+              data: { ...taskToMove, stage: targetStage, team: taskToMove.team?.map((t) => t._id || t) },
             }).unwrap();
             toast.success(`Moved "${taskToMove.title}" to ${targetStage}`);
           } catch (err) {
@@ -136,18 +146,19 @@ const Tasks = () => {
 
     if (lowerCommand.startsWith("mark ") && lowerCommand.includes(" as completed")) {
       const titleToFind = lowerCommand.replace("mark ", "").replace(" as completed", "").trim();
-      const taskToMove = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
 
       if (!isAdmin) {
         toast.error("Only admins can mark tasks as completed via voice.");
         return;
       }
 
+      const taskToMove = findTaskByTitle(titleToFind);
+
       if (taskToMove) {
         try {
           await updateTask({
             id: taskToMove._id,
-            data: { ...taskToMove, stage: "completed", team: taskToMove.team?.map(t => t._id || t) }
+            data: { ...taskToMove, stage: "completed", team: taskToMove.team?.map((t) => t._id || t) },
           }).unwrap();
           toast.success(`Marked "${taskToMove.title}" as completed`);
         } catch (err) {
@@ -161,7 +172,11 @@ const Tasks = () => {
 
     if (lowerCommand.startsWith("create task ") || lowerCommand.startsWith("add task ")) {
       const title = command.replace(/create task |add task /i, "").trim();
-      setPrefillData({ title, priority: "normal" });
+      setPrefillData({
+        title,
+        priority: "normal",
+        date: new Date().toISOString().split("T")[0],
+      });
       setSelectedTask(null);
       setOpen(true);
       return;
@@ -176,7 +191,7 @@ const Tasks = () => {
 
     if (lowerCommand.startsWith("edit task ")) {
       const titleToFind = lowerCommand.replace("edit task ", "").trim();
-      const taskToEdit = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+      const taskToEdit = findTaskByTitle(titleToFind);
       if (taskToEdit) {
         setSelectedTask(taskToEdit);
         setPrefillData(null);
@@ -189,10 +204,10 @@ const Tasks = () => {
 
     if (lowerCommand.startsWith("delete task ")) {
       const titleToFind = lowerCommand.replace("delete task ", "").trim();
-      const taskToDelete = data?.tasks?.find(t => t.title.toLowerCase() === titleToFind);
+      const taskToDelete = findTaskByTitle(titleToFind);
 
       if (taskToDelete) {
-        if (taskToDelete.createdByRole === "admin" && !user?.isAdmin) {
+        if (taskToDelete.createdByRole === "admin" && !isAdmin) {
           toast.error("You are not authorized to trash this admin-created task.");
           return;
         }
@@ -208,7 +223,6 @@ const Tasks = () => {
       return;
     }
 
-
     // ── Bulk: Delete All Tasks ──────────────────────────────────────────
     if (
       lowerCommand.includes("delete all tasks") ||
@@ -217,7 +231,7 @@ const Tasks = () => {
       const tasks = data?.tasks || [];
       if (!tasks.length) { toast.error("No tasks to delete."); return; }
 
-      if (!user?.isAdmin) {
+      if (!isAdmin) {
         toast.error("Only admins can delete all tasks.");
         return;
       }
@@ -268,17 +282,24 @@ const Tasks = () => {
 
 
   const startVoiceRecognition = () => {
-    if (!("webkitSpeechRecognition" in window)) {
-      toast.error("Voice recognition not supported");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Voice recognition not supported in this browser. Please use Chrome or Edge.");
       return;
     }
-    const recognition = new window.webkitSpeechRecognition();
+    const recognition = new SpeechRecognition();
     recognition.onstart = () => setListening(true);
     recognition.onresult = (e) => {
       const raw = e.results[0][0].transcript;
-      // Strip trailing/leading punctuation added by the Speech API
       const clean = raw.replace(/[.,!?;:]+$/g, "").trim();
       handleVoiceCommand(clean);
+    };
+    recognition.onerror = (e) => {
+      console.error("Speech recognition error:", e.error);
+      setListening(false);
+      if (e.error !== "no-speech") {
+        toast.error(`Voice error: ${e.error}`);
+      }
     };
     recognition.onend = () => setListening(false);
     recognition.start();
@@ -379,7 +400,7 @@ const Tasks = () => {
           </div>
 
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               icon={<Info size={18} className="text-blue-500" />}
