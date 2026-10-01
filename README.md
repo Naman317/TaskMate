@@ -100,8 +100,19 @@
 - **Dynamic Badge**: Unread notification counter that updates in real time.
 
 ### 6. Voice Commands & Accessibility
-- **Speech Recognition Engine**: Integrated Web Speech API for hands-free dashboard navigation and task filtering.
-- **Voice Guide Modal**: Interactive guide explaining trigger syntax (`"Create task [name]"`, `"Search for [keyword]"`).
+Tasky includes hands-free voice recognition powered by the Web Speech API with real-time parsing, stage shifting, bulk operations, and navigation.
+
+| Command Category | Example Voice Phrasing | Action Triggered |
+| :--- | :--- | :--- |
+| **Task Creation** | `"Create task Prepare Q4 Budget"`<br/>`"Add task Audit MongoDB indexes"` | Opens the task modal with the task title pre-filled, priority default, and date automatically set to today. |
+| **Task Editing** | `"Edit task Prepare Q4 Budget"` | Performs an exact/fuzzy search for the task and opens it in Edit Mode. |
+| **Stage Transition** | `"Move Prepare Q4 Budget to in progress"`<br/>`"Move Audit MongoDB indexes to completed"`<br/>`"Move design review to todo"` | Matches task by title and shifts stage (`todo` $\leftrightarrow$ `in progress` $\leftrightarrow$ `completed`). |
+| **Quick Completion** | `"Mark Prepare Q4 Budget as completed"` | Instantly updates the task stage to completed. |
+| **Task Deletion** | `"Delete task Prepare Q4 Budget"` | Moves the targeted task to trash (authorized check enabled). |
+| **Bulk Actions** | `"Mark all as completed"`<br/>`"Delete all tasks"` | Dispatches batch async updates across all pending tasks with live progress toast. |
+| **Search & Filtering** | `"Search for frontend"`<br/>`"Clear search"` | Sets or clears the dynamic task filter. |
+| **View Switching** | `"Switch to board view"`<br/>`"Switch to list view"` | Toggles between Kanban Board and Data Table views. |
+| **Navigation** | `"Go to dashboard"`<br/>`"Go to trash"`<br/>`"Go to team"` | Navigates directly to the respective route. |
 
 ---
 
