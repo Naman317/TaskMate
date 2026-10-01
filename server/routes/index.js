@@ -4,7 +4,7 @@ import taskRoutes from "./taskRoutes.js";
 
 const router = express.Router();
 
-router.use("/user", userRoutes); //api/user/login
+router.use("/user", userRoutes);
 router.use("/task", taskRoutes);
 
 

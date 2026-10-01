@@ -98,8 +98,6 @@ const AddTask = ({ open, setOpen, task, prefillData, refresh }) => {
 
       setUploading(false);
       setOpen(false);
-      // RTK Query handles refetching automatically via invalidatesTags
-      // if (refresh) refresh(); 
     } catch (err) {
       console.error("Error submitting task:", err);
       toast.error(err?.data?.message || "Failed to submit task.");

@@ -1,4 +1,3 @@
-// src/redux/slices/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const userFromStorage = JSON.parse(localStorage.getItem("user"));

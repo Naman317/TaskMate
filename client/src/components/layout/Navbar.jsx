@@ -28,7 +28,6 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/80 px-4 backdrop-blur-md md:px-8">
-      {/* ... existing code ... */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => dispatch(setOpenSidebar(true))}
